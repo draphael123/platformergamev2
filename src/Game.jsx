@@ -295,11 +295,12 @@ class MusicEngine {
 
     try {
       await Tone.start();
-      const bpm = 72 + levelId * 2;
+      const bpm = 68 + levelId * 1.5;
       Tone.getTransport().bpm.value = bpm;
 
-      const reverb = new Tone.Reverb({ decay: 3.5, wet: 0.45 }).toDestination();
-      const delay = new Tone.FeedbackDelay({ delayTime: "8n", feedback: 0.25, wet: 0.2 }).connect(reverb);
+      const filter = new Tone.Filter({ frequency: 3200, type: "lowpass", rolloff: -12 }).toDestination();
+      const reverb = new Tone.Reverb({ decay: 4, wet: 0.5 }).connect(filter);
+      const delay = new Tone.FeedbackDelay({ delayTime: "8n", feedback: 0.2, wet: 0.18 }).connect(reverb);
 
       const scales = [
         ["C3", "D3", "E3", "G3", "A3", "C4", "D4", "E4", "G4"],
@@ -319,8 +320,8 @@ class MusicEngine {
       const chordRootsLen = chordRoots.length;
 
       const pad = new Tone.PolySynth(Tone.FMSynth, {
-        volume: -16, harmonicity: 2.5, modulationIndex: 1.2,
-        envelope: { attack: 1.5, decay: 0.8, sustain: 0.75, release: 2.5 },
+        volume: -18, harmonicity: 2, modulationIndex: 0.8,
+        envelope: { attack: 2, decay: 0.8, sustain: 0.7, release: 3 },
         modulation: { type: "sine" },
       }).connect(reverb);
       this.synths.push(pad);
@@ -338,9 +339,9 @@ class MusicEngine {
       this.loops.push(padLoop);
 
       const melody = new Tone.Synth({
-        volume: -12,
-        oscillator: { type: levelId > 5 ? "sawtooth" : "triangle" },
-        envelope: { attack: 0.05, decay: 0.2, sustain: 0.5, release: 1 },
+        volume: -15,
+        oscillator: { type: "triangle" },
+        envelope: { attack: 0.08, decay: 0.25, sustain: 0.45, release: 1.2 },
       }).connect(delay);
       this.synths.push(melody);
 
@@ -358,9 +359,9 @@ class MusicEngine {
       this.loops.push(melodyLoop);
 
       const bass = new Tone.MonoSynth({
-        volume: -14, oscillator: { type: "triangle" },
-        envelope: { attack: 0.02, decay: 0.25, sustain: 0.4, release: 0.6 },
-        filterEnvelope: { attack: 0.02, decay: 0.15, sustain: 0.3, release: 0.4, baseFrequency: 80, octaves: 1 },
+        volume: -16, oscillator: { type: "triangle" },
+        envelope: { attack: 0.03, decay: 0.3, sustain: 0.35, release: 0.7 },
+        filterEnvelope: { attack: 0.03, decay: 0.2, sustain: 0.25, release: 0.5, baseFrequency: 70, octaves: 0.8 },
       }).connect(reverb);
       this.synths.push(bass);
 
@@ -374,7 +375,7 @@ class MusicEngine {
       bassLoop.start(0);
       this.loops.push(bassLoop);
 
-      const kick = new Tone.MembraneSynth({ volume: -18, pitchDecay: 0.06, octaves: 3 }).connect(reverb);
+      const kick = new Tone.MembraneSynth({ volume: -20, pitchDecay: 0.08, octaves: 2.5 }).connect(reverb);
       this.synths.push(kick);
       let kickBeat = 0;
       const kickLoop = new Tone.Loop((time) => {
@@ -385,7 +386,7 @@ class MusicEngine {
       this.loops.push(kickLoop);
 
       if (levelId >= 3) {
-        const snare = new Tone.NoiseSynth({ volume: -24, envelope: { attack: 0.001, decay: 0.12, sustain: 0 } }).connect(reverb);
+        const snare = new Tone.NoiseSynth({ volume: -28, envelope: { attack: 0.002, decay: 0.1, sustain: 0 } }).connect(reverb);
         this.synths.push(snare);
         let snareBeat = 0;
         const snareLoop = new Tone.Loop((time) => {
@@ -397,8 +398,8 @@ class MusicEngine {
       }
 
       const arp = new Tone.Synth({
-        volume: -20, oscillator: { type: "sine" },
-        envelope: { attack: 0.005, decay: 0.08, sustain: 0.05, release: 0.3 },
+        volume: -22, oscillator: { type: "sine" },
+        envelope: { attack: 0.02, decay: 0.1, sustain: 0.05, release: 0.4 },
       }).connect(delay);
       this.synths.push(arp);
 
@@ -432,13 +433,13 @@ class MusicEngine {
 
   playHit() {
     try {
-      const s = new Tone.Synth({ volume: -10, oscillator: { type: "square" }, envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.1 } }).toDestination();
-      s.detune.value = (Math.random() - 0.5) * 80;
+      const s = new Tone.Synth({ volume: -14, oscillator: { type: "triangle" }, envelope: { attack: 0.02, decay: 0.08, sustain: 0, release: 0.08 } }).toDestination();
+      s.detune.value = (Math.random() - 0.5) * 40;
       s.triggerAttackRelease("C5", "32n");
       setTimeout(() => s.dispose(), 500);
-      const crunch = new Tone.Synth({ volume: -14, oscillator: { type: "triangle" }, envelope: { attack: 0.01, decay: 0.08, sustain: 0, release: 0.06 } }).toDestination();
+      const crunch = new Tone.Synth({ volume: -18, oscillator: { type: "sine" }, envelope: { attack: 0.02, decay: 0.06, sustain: 0, release: 0.05 } }).toDestination();
       setTimeout(() => {
-        crunch.detune.value = (Math.random() - 0.5) * 100;
+        crunch.detune.value = (Math.random() - 0.5) * 50;
         crunch.triggerAttackRelease("C4", "16n");
         setTimeout(() => crunch.dispose(), 300);
       }, 25);
@@ -447,8 +448,8 @@ class MusicEngine {
 
   playJump() {
     try {
-      const s = new Tone.Synth({ volume: -15, oscillator: { type: "sine" }, envelope: { attack: 0.01, decay: 0.15, sustain: 0, release: 0.1 } }).toDestination();
-      s.detune.value = (Math.random() - 0.5) * 80;
+      const s = new Tone.Synth({ volume: -18, oscillator: { type: "sine" }, envelope: { attack: 0.02, decay: 0.12, sustain: 0, release: 0.12 } }).toDestination();
+      s.detune.value = (Math.random() - 0.5) * 40;
       s.triggerAttackRelease("E5", "16n");
       setTimeout(() => s.dispose(), 500);
     } catch (e) {}
@@ -457,9 +458,9 @@ class MusicEngine {
   playLand(impactStrength) {
     try {
       const t = Math.min(1, (impactStrength - 3) / 12);
-      const freq = 120 + (1 - t) * 80;
-      const vol = -18 + t * 4;
-      const s = new Tone.Synth({ volume: vol, oscillator: { type: "triangle" }, envelope: { attack: 0.01, decay: 0.08, sustain: 0, release: 0.05 } }).toDestination();
+      const freq = 110 + (1 - t) * 70;
+      const vol = -20 + t * 4;
+      const s = new Tone.Synth({ volume: vol, oscillator: { type: "sine" }, envelope: { attack: 0.02, decay: 0.1, sustain: 0, release: 0.06 } }).toDestination();
       s.triggerAttackRelease(freq, "16n");
       setTimeout(() => s.dispose(), 200);
     } catch (e) {}
@@ -469,9 +470,9 @@ class MusicEngine {
     try {
       const pitchBySurface = { ground: "G4", float: "A4", moving: "Bb4" };
       const note = pitchBySurface[surface] || "G4";
-      const volDb = volume <= 0 ? -60 : -22 + Math.log10(Math.max(0.01, volume)) * 20;
-      const s = new Tone.Synth({ volume: volDb, oscillator: { type: "sine" }, envelope: { attack: 0.01, decay: 0.04, sustain: 0, release: 0.02 } }).toDestination();
-      s.detune.value = (Math.random() - 0.5) * 120;
+      const volDb = volume <= 0 ? -60 : -26 + Math.log10(Math.max(0.01, volume)) * 18;
+      const s = new Tone.Synth({ volume: volDb, oscillator: { type: "sine" }, envelope: { attack: 0.02, decay: 0.05, sustain: 0, release: 0.03 } }).toDestination();
+      s.detune.value = (Math.random() - 0.5) * 60;
       s.triggerAttackRelease(note, "32n");
       setTimeout(() => s.dispose(), 150);
     } catch (e) {}
@@ -479,8 +480,8 @@ class MusicEngine {
 
   playCoin() {
     try {
-      const s = new Tone.Synth({ volume: -12, oscillator: { type: "triangle" }, envelope: { attack: 0.01, decay: 0.15, sustain: 0, release: 0.2 } }).toDestination();
-      s.detune.value = (Math.random() - 0.5) * 60;
+      const s = new Tone.Synth({ volume: -15, oscillator: { type: "triangle" }, envelope: { attack: 0.02, decay: 0.12, sustain: 0, release: 0.18 } }).toDestination();
+      s.detune.value = (Math.random() - 0.5) * 30;
       s.triggerAttackRelease("A5", "16n");
       setTimeout(() => { s.triggerAttackRelease("C6", "16n"); setTimeout(() => s.dispose(), 500); }, 80);
     } catch (e) {}
@@ -488,7 +489,7 @@ class MusicEngine {
 
   playHeal() {
     try {
-      const s = new Tone.Synth({ volume: -10, oscillator: { type: "sine" }, envelope: { attack: 0.02, decay: 0.2, sustain: 0.3, release: 0.3 } }).toDestination();
+      const s = new Tone.Synth({ volume: -14, oscillator: { type: "sine" }, envelope: { attack: 0.03, decay: 0.2, sustain: 0.25, release: 0.35 } }).toDestination();
       s.triggerAttackRelease("E5", "8n");
       setTimeout(() => { s.triggerAttackRelease("G5", "8n"); setTimeout(() => { s.triggerAttackRelease("C6", "8n"); setTimeout(() => s.dispose(), 400); }, 80); }, 80);
     } catch (e) {}
@@ -496,7 +497,7 @@ class MusicEngine {
 
   playBossDeath() {
     try {
-      const s = new Tone.Synth({ volume: -8, oscillator: { type: "sawtooth" }, envelope: { attack: 0.01, decay: 1, sustain: 0, release: 0.5 } }).toDestination();
+      const s = new Tone.Synth({ volume: -14, oscillator: { type: "triangle" }, envelope: { attack: 0.05, decay: 0.8, sustain: 0, release: 0.6 } }).toDestination();
       s.triggerAttackRelease("C3", "2n");
       setTimeout(() => s.dispose(), 3000);
     } catch (e) {}
@@ -504,7 +505,7 @@ class MusicEngine {
 
   playParry() {
     try {
-      const s = new Tone.Synth({ volume: -6, oscillator: { type: "sine" }, envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.2 } }).toDestination();
+      const s = new Tone.Synth({ volume: -12, oscillator: { type: "sine" }, envelope: { attack: 0.02, decay: 0.12, sustain: 0, release: 0.2 } }).toDestination();
       s.triggerAttackRelease("E6", "16n");
       setTimeout(() => { s.triggerAttackRelease("G6", "16n"); setTimeout(() => s.dispose(), 300); }, 50);
     } catch (e) {}

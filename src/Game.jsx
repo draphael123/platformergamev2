@@ -68,58 +68,69 @@ const UNLOCK_DOUBLE_JUMP_AFTER_LEVEL = 1;
 
 // Attack types: 0 = fast, 1 = slow, 2 = special (cooldown)
 const ATTACK_TYPES = [
-  { id: 0, name: "Fast", duration: 10, hitFrame: 7, cooldown: 12, dmgMult: 0.7, swordW: 28 },
-  { id: 1, name: "Slow", duration: 26, hitFrame: 20, cooldown: 36, dmgMult: 1.5, swordW: 42 },
-  { id: 2, name: "Special", duration: 18, hitFrame: 12, cooldown: 0, specialCooldownMax: 180, dmgMult: 2, swordW: 38 },
+  { id: 0, name: "Fast", shortDesc: "Quick slash", longDesc: "Quick, low damage. Hold Z to charge for bonus damage.", duration: 10, hitFrame: 7, cooldown: 12, dmgMult: 0.7, swordW: 28 },
+  { id: 1, name: "Slow", shortDesc: "Heavy strike", longDesc: "Slow, high damage. Hold Z to charge for bonus damage.", duration: 26, hitFrame: 20, cooldown: 36, dmgMult: 1.5, swordW: 42 },
+  { id: 2, name: "Special", shortDesc: "Power move", longDesc: "Strong hit with long cooldown. Use when the bar is full.", duration: 18, hitFrame: 12, cooldown: 0, specialCooldownMax: 180, dmgMult: 2, swordW: 38 },
 ];
 
 const CHARACTERS = [
-  { id: 0, name: "Knight", color: "#4A90D9", accent: "#FFD700", speed: 4, jump: -12, health: 100, attack: 15, desc: "Balanced warrior", icon: "⚔️" },
-  { id: 1, name: "Rogue", color: "#8B45A6", accent: "#00FF88", speed: 6, jump: -11, health: 70, attack: 12, desc: "Swift & deadly", icon: "🗡️" },
+  { id: 0, name: "Knight", color: "#5c6b7a", accent: "#c4a35a", speed: 4, jump: -12, health: 100, attack: 15, desc: "Balanced warrior", icon: "⚔️", quote: "For the realm.", levelStart: "Another realm to restore.", death: "The realm... falls...", bossKill: "Your reign ends." },
+  { id: 1, name: "Rogue", color: "#6b5b6b", accent: "#8fbc8f", speed: 6, jump: -11, health: 70, attack: 12, desc: "Swift & deadly", icon: "🗡️", quote: "Fast and quiet.", levelStart: "Let's see what's worth taking.", death: "Should've dodged.", bossKill: "Easy gold." },
   {
     id: 2,
     name: "Lyra",
     title: "the Starweaver",
-    color: "#2ECFCF",
-    accent: "#FF6B9D",
+    color: "#4a6b6b",
+    accent: "#c97b7b",
     speed: 3.5,
     jump: -11.5,
     health: 75,
     attack: 20,
     desc: "Chaos mage. Book-smart, battle-crazy. Fires first, asks questions never.",
     quote: "\"If it's not on fire, I'm not trying hard enough.\"",
+    levelStart: "Something's about to get lit.",
+    death: "At least it was dramatic.",
+    bossKill: "That's what you get.",
     personality: "Sarcastic, curious, and utterly convinced that every problem is just a spell away from being someone else's problem. Collects rare teas and enemy tears.",
     icon: "🔮",
   },
-  { id: 3, name: "Berserker", color: "#E74C3C", accent: "#FF8C00", speed: 3, jump: -10.5, health: 120, attack: 25, desc: "Raw strength", icon: "🪓" },
-  { id: 4, name: "Ranger", color: "#27AE60", accent: "#F1C40F", speed: 5, jump: -13, health: 80, attack: 13, desc: "Double jump", icon: "🏹" },
-  { id: 5, name: "Paladin", color: "#F39C12", accent: "#ECF0F1", speed: 3.5, jump: -11, health: 140, attack: 18, desc: "Holy shield", icon: "🛡️" },
+  { id: 3, name: "Berserker", color: "#8b4a3c", accent: "#b8956e", speed: 3, jump: -10.5, health: 120, attack: 25, desc: "Raw strength", icon: "🪓", quote: "Strength is all.", levelStart: "More to break.", death: "Not... enough...", bossKill: "Again!" },
+  { id: 4, name: "Ranger", color: "#4a6b4a", accent: "#9a9a5a", speed: 5, jump: -13, health: 80, attack: 13, desc: "Double jump", icon: "🏹", quote: "Eyes open.", levelStart: "High ground wins.", death: "Missed my shot.", bossKill: "Clean kill." },
+  { id: 5, name: "Paladin", color: "#7a7a5c", accent: "#d4c4a8", speed: 3.5, jump: -11, health: 140, attack: 18, desc: "Holy shield", icon: "🛡️", quote: "The light endures.", levelStart: "By light we press on.", death: "Forgive me...", bossKill: "The light endures." },
 ];
 
 const LEVELS = [
-  { id: 0, name: "Enchanted Forest", bg1: "#0a1628", bg2: "#1a3a2a", bg3: "#2d5a3d", platform: "#3E7B4E", accent: "#7CFC00", hazard: "thorns", bossName: "Treant King", bossColor: "#2E7D32", bossLine: "The Treant King blocks your path!" },
-  { id: 1, name: "Crystal Caves", bg1: "#0d0d2b", bg2: "#1a1a4e", bg3: "#2d2d6b", platform: "#5C6BC0", accent: "#E040FB", hazard: "crystals", bossName: "Crystal Golem", bossColor: "#7E57C2", bossLine: "The Crystal Golem awakens!" },
-  { id: 2, name: "Volcanic Wastes", bg1: "#1a0a00", bg2: "#3d1a00", bg3: "#5a2d0a", platform: "#8D6E63", accent: "#FF5722", hazard: "lava", bossName: "Magma Wyrm", bossColor: "#D84315", bossLine: "The Magma Wyrm rises from the flames!" },
-  { id: 3, name: "Frozen Peaks", bg1: "#0a1a2e", bg2: "#1a3a5e", bg3: "#3a6a8e", platform: "#B0BEC5", accent: "#00BCD4", hazard: "ice", bossName: "Frost Giant", bossColor: "#0097A7", bossLine: "The Frost Giant stirs!" },
-  { id: 4, name: "Ancient Ruins", bg1: "#1a1a0a", bg2: "#3d3a1a", bg3: "#5a5a3d", platform: "#A1887F", accent: "#FFD54F", hazard: "traps", bossName: "Stone Guardian", bossColor: "#795548", bossLine: "The Stone Guardian awakens!" },
-  { id: 5, name: "Shadow Marsh", bg1: "#0a0a1a", bg2: "#1a1a2d", bg3: "#2d2d3a", platform: "#546E7A", accent: "#76FF03", hazard: "poison", bossName: "Swamp Hydra", bossColor: "#37474F", bossLine: "The Swamp Hydra emerges!" },
-  { id: 6, name: "Sky Citadel", bg1: "#1a2a4e", bg2: "#3a5a8e", bg3: "#5a8abe", platform: "#90CAF9", accent: "#FFF176", hazard: "wind", bossName: "Storm Lord", bossColor: "#1565C0", bossLine: "The Storm Lord commands the skies!" },
-  { id: 7, name: "Desert Temple", bg1: "#2a1a0a", bg2: "#5a3a1a", bg3: "#8a6a3a", platform: "#D4A056", accent: "#FF7043", hazard: "sand", bossName: "Pharaoh Lich", bossColor: "#BF8C3E", bossLine: "The Pharaoh Lich defies death!" },
-  { id: 8, name: "Abyssal Depths", bg1: "#000a1a", bg2: "#001a3a", bg3: "#002a4a", platform: "#37474F", accent: "#18FFFF", hazard: "water", bossName: "Leviathan", bossColor: "#00695C", bossLine: "The Leviathan hungers!" },
-  { id: 9, name: "Dragon's Keep", bg1: "#1a0000", bg2: "#3d0a0a", bg3: "#5a1a1a", platform: "#4E342E", accent: "#FF1744", hazard: "fire", bossName: "Elder Dragon", bossColor: "#B71C1C", bossLine: "The Elder Dragon awaits!" },
+  { id: 0, name: "Enchanted Forest", bg1: "#1a2418", bg2: "#2a3828", bg3: "#3d4d38", platform: "#4a5c42", accent: "#6b8f6b", hazard: "thorns", bossName: "Treant King", bossColor: "#3d5c3d", bossLine: "The Treant King blocks your path!", bossPhase2Line: "The forest will consume you!" },
+  { id: 1, name: "Crystal Caves", bg1: "#1a1c28", bg2: "#2a2d3d", bg3: "#3d4055", platform: "#5a5c75", accent: "#8a7a9a", hazard: "crystals", bossName: "Crystal Golem", bossColor: "#6a5c7a", bossLine: "The Crystal Golem awakens!", bossPhase2Line: "You cannot shatter me!" },
+  { id: 2, name: "Volcanic Wastes", bg1: "#241810", bg2: "#3d2a1a", bg3: "#5a3d28", platform: "#7a5c4a", accent: "#b85c38", hazard: "lava", bossName: "Magma Wyrm", bossColor: "#8a3a28", bossLine: "The Magma Wyrm rises from the flames!", bossPhase2Line: "Burn!" },
+  { id: 3, name: "Frozen Peaks", bg1: "#1a2428", bg2: "#2a3845", bg3: "#4a5a6a", platform: "#7a8a95", accent: "#7a9aaa", hazard: "ice", bossName: "Frost Giant", bossColor: "#5a7a8a", bossLine: "The Frost Giant stirs!", bossPhase2Line: "Winter never ends!" },
+  { id: 4, name: "Ancient Ruins", bg1: "#242018", bg2: "#3d3528", bg3: "#5a5040", platform: "#8a7a6a", accent: "#b8a058", hazard: "traps", bossName: "Stone Guardian", bossColor: "#6a5a4a", bossLine: "The Stone Guardian awakens!", bossPhase2Line: "You will join the ruins!" },
+  { id: 5, name: "Shadow Marsh", bg1: "#1a201a", bg2: "#2a302a", bg3: "#3d453d", platform: "#4a5a52", accent: "#5a7a6a", hazard: "poison", bossName: "Swamp Hydra", bossColor: "#3d4d45", bossLine: "The Swamp Hydra emerges!", bossPhase2Line: "Many heads, one hunger!" },
+  { id: 6, name: "Sky Citadel", bg1: "#2a3040", bg2: "#4a5568", bg3: "#6a7a95", platform: "#8a9aad", accent: "#a8b8c8", hazard: "wind", bossName: "Storm Lord", bossColor: "#5a6a85", bossLine: "The Storm Lord commands the skies!", bossPhase2Line: "The storm has only begun!" },
+  { id: 7, name: "Desert Temple", bg1: "#2a2418", bg2: "#4a3d28", bg3: "#7a6a4a", platform: "#b89a6a", accent: "#c8a858", hazard: "sand", bossName: "Pharaoh Lich", bossColor: "#8a7a4a", bossLine: "The Pharaoh Lich defies death!", bossPhase2Line: "Death serves me!" },
+  { id: 8, name: "Abyssal Depths", bg1: "#0a1418", bg2: "#1a2830", bg3: "#2a3d48", platform: "#3d5058", accent: "#5a7a85", hazard: "water", bossName: "Leviathan", bossColor: "#2a4a52", bossLine: "The Leviathan hungers!", bossPhase2Line: "The deep takes all!" },
+  { id: 9, name: "Dragon's Keep", bg1: "#281814", bg2: "#4a3028", bg3: "#6a4038", platform: "#5a4038", accent: "#9a5048", hazard: "fire", bossName: "Elder Dragon", bossColor: "#7a3830", bossLine: "The Elder Dragon awaits!", bossPhase2Line: "You dare challenge me?!" },
 ];
 
 const LEVEL_INTRO_LINES = [
-  "The forest holds many secrets...",
-  "Crystals hum with ancient power.",
-  "Only the bold dare tread here.",
-  "Cold winds bite deep.",
-  "Ruins remember the old wars.",
-  "The marsh breathes poison.",
-  "The sky citadel looms.",
-  "Sands hide more than treasure.",
-  "The depths swallow the light.",
-  "The final trial begins.",
+  ["The forest holds many secrets...", "The trees watch.", "Something stirs ahead."],
+  ["Crystals hum with ancient power.", "The caves echo.", "Light reflects in the dark."],
+  ["Only the bold dare tread here.", "The air burns.", "Magma stirs below."],
+  ["Cold winds bite deep.", "Ice never forgets.", "The peaks are merciless."],
+  ["Ruins remember the old wars.", "Stone holds secrets.", "The past stirs."],
+  ["The marsh breathes poison.", "Still waters hide death.", "The swamp claims the careless."],
+  ["The sky citadel looms.", "Winds cut like blades.", "The storm awaits."],
+  ["Sands hide more than treasure.", "The desert forgets nothing.", "Gold and graves."],
+  ["The depths swallow the light.", "Pressure and silence.", "The abyss stares back."],
+  ["The final trial begins.", "The dragon remembers.", "One more realm."],
+];
+
+const DEATH_SCREEN_LINES = [
+  "You fell.",
+  "The realm claims another.",
+  "Not this time.",
+  "Defeat.",
+  "Your journey ends here.",
 ];
 
 // ============================================================
@@ -284,96 +295,119 @@ class MusicEngine {
 
     try {
       await Tone.start();
-      Tone.getTransport().bpm.value = 70 + levelId * 3;
+      const bpm = 72 + levelId * 2;
+      Tone.getTransport().bpm.value = bpm;
 
-      const reverb = new Tone.Reverb({ decay: 4, wet: 0.5 }).toDestination();
-      const delay = new Tone.FeedbackDelay({ delayTime: "8n", feedback: 0.2, wet: 0.15 }).connect(reverb);
+      const reverb = new Tone.Reverb({ decay: 3.5, wet: 0.45 }).toDestination();
+      const delay = new Tone.FeedbackDelay({ delayTime: "8n", feedback: 0.25, wet: 0.2 }).connect(reverb);
 
       const scales = [
-        ["C3", "D3", "E3", "G3", "A3", "C4", "D4", "E4"],
-        ["C3", "Eb3", "F3", "G3", "Bb3", "C4", "Eb4", "F4"],
-        ["D3", "F3", "G3", "A3", "Bb3", "D4", "F4", "G4"],
-        ["A2", "B2", "D3", "E3", "F#3", "A3", "B3", "D4"],
-        ["E3", "F#3", "G#3", "A3", "B3", "C#4", "E4", "F#4"],
-        ["C3", "Db3", "E3", "F3", "Ab3", "Bb3", "C4", "E4"],
-        ["G3", "A3", "B3", "C4", "D4", "E4", "F#4", "G4"],
-        ["D3", "E3", "F3", "A3", "Bb3", "C4", "D4", "F4"],
-        ["C3", "D3", "Eb3", "G3", "Ab3", "Bb3", "C4", "Eb4"],
-        ["D3", "E3", "F#3", "G3", "A3", "B3", "C#4", "D4"],
+        ["C3", "D3", "E3", "G3", "A3", "C4", "D4", "E4", "G4"],
+        ["C3", "Eb3", "F3", "G3", "Bb3", "C4", "Eb4", "F4", "G4"],
+        ["D3", "F3", "G3", "A3", "Bb3", "D4", "F4", "G4", "A4"],
+        ["A2", "B2", "D3", "E3", "F#3", "A3", "B3", "D4", "E4"],
+        ["E3", "F#3", "G#3", "A3", "B3", "C#4", "E4", "F#4", "G#4"],
+        ["C3", "Db3", "E3", "F3", "Ab3", "Bb3", "C4", "E4", "F4"],
+        ["G3", "A3", "B3", "C4", "D4", "E4", "F#4", "G4", "B4"],
+        ["D3", "E3", "F3", "A3", "Bb3", "C4", "D4", "F4", "A4"],
+        ["C3", "D3", "Eb3", "G3", "Ab3", "Bb3", "C4", "Eb4", "G4"],
+        ["D3", "E3", "F#3", "G3", "A3", "B3", "C#4", "D4", "F#4"],
       ];
-
       const scale = scales[levelId] || scales[0];
+      // Chord roots for progression: I - V - vi - IV (indices into scale 0,4,5,3)
+      const chordRoots = [0, 4, 5, 3];
+      const chordRootsLen = chordRoots.length;
 
       const pad = new Tone.PolySynth(Tone.FMSynth, {
-        volume: -18, harmonicity: 2, modulationIndex: 1.5,
-        envelope: { attack: 2, decay: 1, sustain: 0.8, release: 3 },
+        volume: -16, harmonicity: 2.5, modulationIndex: 1.2,
+        envelope: { attack: 1.5, decay: 0.8, sustain: 0.75, release: 2.5 },
         modulation: { type: "sine" },
       }).connect(reverb);
       this.synths.push(pad);
 
+      let chordIdx = 0;
       const padLoop = new Tone.Loop((time) => {
-        const note = scale[Math.floor(Math.random() * 3)];
-        pad.triggerAttackRelease(note, "2n", time);
-      }, "1m");
+        const root = chordRoots[chordIdx % chordRootsLen];
+        const rootNote = scale[root];
+        const third = scale[(root + 2) % scale.length];
+        const fifth = scale[(root + 4) % scale.length];
+        pad.triggerAttackRelease([rootNote, third, fifth], "2n", time);
+        chordIdx++;
+      }, "2n");
       padLoop.start(0);
       this.loops.push(padLoop);
 
       const melody = new Tone.Synth({
-        volume: -14,
-        oscillator: { type: levelId > 6 ? "sawtooth" : "triangle" },
-        envelope: { attack: 0.1, decay: 0.3, sustain: 0.4, release: 1.5 },
+        volume: -12,
+        oscillator: { type: levelId > 5 ? "sawtooth" : "triangle" },
+        envelope: { attack: 0.05, decay: 0.2, sustain: 0.5, release: 1 },
       }).connect(delay);
       this.synths.push(melody);
 
-      let noteIdx = 0;
+      const motif = [0, 2, 4, 2, 4, 5, 4, 2];
+      let motifIdx = 0;
       const melodyLoop = new Tone.Loop((time) => {
-        if (Math.random() > 0.35) {
-          const note = scale[noteIdx % scale.length];
-          melody.triggerAttackRelease(note, Math.random() > 0.5 ? "4n" : "8n", time);
-        }
-        noteIdx = (noteIdx + 1 + Math.floor(Math.random() * 3)) % scale.length;
-      }, "4n");
+        const i = motifIdx % motif.length;
+        const scaleIdx = motif[i] % scale.length;
+        const note = scale[scaleIdx];
+        const dur = i === 3 || i === 5 ? "4n" : "8n";
+        melody.triggerAttackRelease(note, dur, time);
+        motifIdx++;
+      }, "8n");
       melodyLoop.start(0);
       this.loops.push(melodyLoop);
 
       const bass = new Tone.MonoSynth({
-        volume: -16, oscillator: { type: "square" },
-        envelope: { attack: 0.05, decay: 0.3, sustain: 0.5, release: 0.8 },
-        filterEnvelope: { attack: 0.05, decay: 0.2, sustain: 0.3, release: 0.5, baseFrequency: 100, octaves: 2 },
+        volume: -14, oscillator: { type: "triangle" },
+        envelope: { attack: 0.02, decay: 0.25, sustain: 0.4, release: 0.6 },
+        filterEnvelope: { attack: 0.02, decay: 0.15, sustain: 0.3, release: 0.4, baseFrequency: 80, octaves: 1 },
       }).connect(reverb);
       this.synths.push(bass);
 
+      let bassChordIdx = 0;
       const bassLoop = new Tone.Loop((time) => {
-        const note = scale[Math.floor(Math.random() * 2)];
-        const lowNote = note.replace(/\d/, (d) => Math.max(1, parseInt(d) - 1));
-        bass.triggerAttackRelease(lowNote, "2n", time);
-      }, "1m");
+        const root = chordRoots[bassChordIdx % chordRootsLen];
+        const lowNote = scale[root].replace(/(\d+)/, (_, d) => Math.max(1, parseInt(d) - 1));
+        bass.triggerAttackRelease(lowNote, "4n", time);
+        bassChordIdx++;
+      }, "4n");
       bassLoop.start(0);
       this.loops.push(bassLoop);
 
-      if (levelId >= 5) {
-        const kick = new Tone.MembraneSynth({ volume: -20, pitchDecay: 0.05, octaves: 4 }).connect(reverb);
-        this.synths.push(kick);
-        const kickLoop = new Tone.Loop((time) => {
-          kick.triggerAttackRelease("C1", "8n", time);
-        }, "2n");
-        kickLoop.start(0);
-        this.loops.push(kickLoop);
+      const kick = new Tone.MembraneSynth({ volume: -18, pitchDecay: 0.06, octaves: 3 }).connect(reverb);
+      this.synths.push(kick);
+      let kickBeat = 0;
+      const kickLoop = new Tone.Loop((time) => {
+        if (kickBeat % 2 === 0) kick.triggerAttackRelease("C1", "8n", time);
+        kickBeat++;
+      }, "4n");
+      kickLoop.start(0);
+      this.loops.push(kickLoop);
+
+      if (levelId >= 3) {
+        const snare = new Tone.NoiseSynth({ volume: -24, envelope: { attack: 0.001, decay: 0.12, sustain: 0 } }).connect(reverb);
+        this.synths.push(snare);
+        let snareBeat = 0;
+        const snareLoop = new Tone.Loop((time) => {
+          if (snareBeat % 2 === 1) snare.triggerAttackRelease("16n", time);
+          snareBeat++;
+        }, "4n");
+        snareLoop.start(0);
+        this.loops.push(snareLoop);
       }
 
       const arp = new Tone.Synth({
-        volume: -22, oscillator: { type: "sine" },
-        envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.5 },
+        volume: -20, oscillator: { type: "sine" },
+        envelope: { attack: 0.005, decay: 0.08, sustain: 0.05, release: 0.3 },
       }).connect(delay);
       this.synths.push(arp);
 
+      const arpPattern = [0, 2, 4, 2];
       let arpIdx = 0;
       const arpLoop = new Tone.Loop((time) => {
-        if (Math.random() > 0.5) {
-          const note = scale[(arpIdx * 2) % scale.length];
-          const highNote = note.replace(/\d/, (d) => parseInt(d) + 1);
-          arp.triggerAttackRelease(highNote, "16n", time);
-        }
+        const scaleIdx = (chordRoots[Math.floor(arpIdx / 4) % chordRootsLen] + arpPattern[arpIdx % 4]) % scale.length;
+        const note = scale[scaleIdx].replace(/(\d+)/, (_, d) => parseInt(d) + 1);
+        arp.triggerAttackRelease(note, "16n", time);
         arpIdx++;
       }, "8n");
       arpLoop.start(0);
@@ -493,9 +527,16 @@ class Particle {
   }
   draw(ctx, camX) {
     const alpha = this.life / this.maxLife;
+    const sz = this.size * (0.3 + 0.7 * alpha);
+    const px = this.x - camX;
     ctx.globalAlpha = alpha;
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = sz * 3;
     ctx.fillStyle = this.color;
-    ctx.fillRect(this.x - camX - this.size / 2, this.y - this.size / 2, this.size, this.size);
+    ctx.beginPath();
+    ctx.arc(px, this.y, sz / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
     ctx.globalAlpha = 1;
   }
 }
@@ -544,6 +585,17 @@ function drawCharacter(ctx, x, y, char, facing, frame, attacking, hurt, landSqua
   if (facing < 0) ctx.scale(-1, 1);
   if (hurt > 0 && Math.floor(hurt) % 4 < 2) ctx.globalAlpha = 0.5;
 
+  // Soft glow behind character (accent aura)
+  ctx.shadowColor = c.accent;
+  ctx.shadowBlur = attacking > 0 ? 20 : 12;
+  ctx.globalAlpha = 0.4;
+  ctx.fillStyle = c.accent + "40";
+  ctx.beginPath();
+  ctx.ellipse(0, 6, 18, 22, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.globalAlpha = hurt > 0 && Math.floor(hurt) % 4 < 2 ? 0.5 : 1;
+
   // Dodge roll: squash into a roll
   if (dodgeRollFrames > 0) {
     ctx.translate(0, 18);
@@ -566,13 +618,22 @@ function drawCharacter(ctx, x, y, char, facing, frame, attacking, hurt, landSqua
     ctx.translate(0, -18);
   }
 
-  ctx.fillStyle = "rgba(0,0,0,0.3)";
+  // Softer, slightly larger drop shadow
+  ctx.fillStyle = "rgba(0,0,0,0.4)";
+  ctx.beginPath();
+  ctx.ellipse(0, 20, 14, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "rgba(0,0,0,0.2)";
   ctx.beginPath();
   ctx.ellipse(0, 18, 12, 4, 0, 0, Math.PI * 2);
   ctx.fill();
 
+  // Body with subtle dark outline so character pops
+  ctx.strokeStyle = "rgba(0,0,0,0.5)";
+  ctx.lineWidth = 2;
   ctx.fillStyle = c.color;
   ctx.fillRect(-10, -6 + bob, 20, 22);
+  ctx.strokeRect(-10, -6 + bob, 20, 22);
   ctx.fillStyle = c.accent;
   ctx.fillRect(-8, 0 + bob, 16, 4);
 
@@ -580,6 +641,8 @@ function drawCharacter(ctx, x, y, char, facing, frame, attacking, hurt, landSqua
   ctx.beginPath();
   ctx.arc(0, -10 + bob, 10, 0, Math.PI * 2);
   ctx.fill();
+  ctx.stroke();
+  ctx.lineWidth = 1;
 
   ctx.fillStyle = "#FFF";
   ctx.fillRect(2, -12 + bob, 5, 4);
@@ -629,7 +692,7 @@ function drawEnemy(ctx, enemy, camX, frame, levelId) {
   ctx.save();
   ctx.translate(x + 16, y + 18);
   if (enemy.facing < 0) ctx.scale(-1, 1);
-  if (enemy.hit > 0) ctx.globalAlpha = 0.6;
+  if (enemy.hit > 0) ctx.globalAlpha = 0.7;
 
   if (enemy.type === "flyer") {
     const wingAnim = Math.sin(frame * 0.3) * 15;
@@ -656,9 +719,14 @@ function drawEnemy(ctx, enemy, camX, frame, levelId) {
   const hpPct = enemy.health / enemy.maxHealth;
   ctx.fillStyle = "#333";
   ctx.fillRect(-12, -22, 24, 4);
-  ctx.fillStyle = hpPct > 0.5 ? "#4CAF50" : hpPct > 0.25 ? "#FF9800" : "#F44336";
+  ctx.fillStyle = hpPct > 0.5 ? "#5a7a5a" : hpPct > 0.25 ? "#a87838" : "#8a4848";
   ctx.fillRect(-12, -22, 24 * hpPct, 4);
 
+  if (enemy.hit > 0) {
+    ctx.fillStyle = "#FFF";
+    ctx.globalAlpha = 0.55;
+    ctx.fillRect(-18, -24 + bob, 36, 44);
+  }
   ctx.globalAlpha = 1;
   ctx.restore();
 }
@@ -717,14 +785,14 @@ function drawBoss(ctx, boss, camX, frame, levelId) {
   ctx.shadowColor = "transparent";
   ctx.fillStyle = "#222";
   ctx.fillRect(-40, -boss.h / 2 - 40, 80, 8);
-  ctx.fillStyle = hpPct > 0.5 ? "#F44336" : hpPct > 0.25 ? "#FF5722" : "#D50000";
+  ctx.fillStyle = hpPct > 0.5 ? "#8a5050" : hpPct > 0.25 ? "#9a5840" : "#6a3030";
   ctx.fillRect(-40, -boss.h / 2 - 40, 80 * hpPct, 8);
   ctx.strokeStyle = "#FFF";
   ctx.lineWidth = 1;
   ctx.strokeRect(-40, -boss.h / 2 - 40, 80, 8);
 
   if (boss.telegraphTimer > 0) {
-    ctx.fillStyle = "#FFD700";
+    ctx.fillStyle = "#c4a35a";
     ctx.font = "bold 28px monospace";
     ctx.textAlign = "center";
     ctx.fillText("!", 0, -boss.h / 2 - 55);
@@ -753,28 +821,61 @@ function drawBackground(ctx, lvl, camX, frame) {
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-  ctx.fillStyle = lvl.accent + "40";
-  for (let i = 0; i < 50; i++) {
-    const sx = ((i * 137 + 50) % CANVAS_W) + ((camX * 0.1) % CANVAS_W);
-    const sy = (i * 91 + 20) % (CANVAS_H - 100);
-    const ss = 1 + (i % 3);
-    const twinkle = Math.sin(frame * 0.05 + i) * 0.5 + 0.5;
-    ctx.globalAlpha = twinkle * 0.6;
-    ctx.fillRect(sx % CANVAS_W, sy, ss, ss);
+  // Radial "spotlight" following player area (subtle brightness)
+  const lightX = CANVAS_W * 0.35 + (camX * 0.02) % CANVAS_W;
+  const spot = ctx.createRadialGradient(lightX, CANVAS_H * 0.5, 0, lightX, CANVAS_H * 0.5, CANVAS_W * 0.9);
+  spot.addColorStop(0, lvl.accent + "08");
+  spot.addColorStop(0.5, "transparent");
+  spot.addColorStop(1, "transparent");
+  ctx.fillStyle = spot;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  // Stars (larger + twinkle + glow)
+  ctx.fillStyle = lvl.accent + "50";
+  for (let i = 0; i < 80; i++) {
+    const sx = ((i * 137 + 50) % (CANVAS_W + 200)) + ((camX * 0.1) % (CANVAS_W + 200)) - 100;
+    const sy = (i * 91 + 20) % (CANVAS_H - 80);
+    const ss = 1.5 + (i % 4) * 0.5;
+    const twinkle = Math.sin(frame * 0.05 + i * 0.7) * 0.5 + 0.5;
+    ctx.globalAlpha = twinkle * 0.7;
+    ctx.shadowColor = lvl.accent;
+    ctx.shadowBlur = ss * 4;
+    ctx.beginPath();
+    ctx.arc(sx, sy, ss, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
   }
   ctx.globalAlpha = 1;
 
-  // Ambient floaters (fireflies / leaves)
-  for (let i = 0; i < 28; i++) {
+  // Ambient floaters (fireflies / leaves) - more and slightly larger
+  for (let i = 0; i < 40; i++) {
     const fx = ((i * 97 + camX * 0.05) % (CANVAS_W + 100)) - 50;
     const fy = (i * 73 + 40) % (CANVAS_H - 80) + 30;
     const drift = Math.sin(frame * 0.04 + i * 0.7) * 8 + Math.cos(frame * 0.03 + i * 0.5) * 5;
-    const alpha = 0.4 + Math.sin(frame * 0.06 + i) * 0.25;
+    const alpha = 0.35 + Math.sin(frame * 0.06 + i) * 0.3;
+    const sz = 1.5 + (i % 3) * 0.5;
     ctx.fillStyle = lvl.accent;
     ctx.globalAlpha = alpha;
+    ctx.shadowColor = lvl.accent;
+    ctx.shadowBlur = 6;
     ctx.beginPath();
-    ctx.arc(fx + drift, fy + Math.sin(frame * 0.05 + i * 1.3) * 4, 2, 0, Math.PI * 2);
+    ctx.arc(fx + drift, fy + Math.sin(frame * 0.05 + i * 1.3) * 4, sz, 0, Math.PI * 2);
     ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+  ctx.globalAlpha = 1;
+
+  // Soft vertical light rays (atmosphere)
+  ctx.globalAlpha = 0.06 + 0.04 * Math.sin(frame * 0.02);
+  ctx.fillStyle = lvl.accent;
+  for (let r = 0; r < 5; r++) {
+    const rx = (camX * 0.08 + r * 280) % (CANVAS_W + 200) - 100;
+    const gradRay = ctx.createLinearGradient(rx, 0, rx + 80, 0);
+    gradRay.addColorStop(0, "transparent");
+    gradRay.addColorStop(0.5, lvl.accent + "30");
+    gradRay.addColorStop(1, "transparent");
+    ctx.fillStyle = gradRay;
+    ctx.fillRect(rx, 0, 80, CANVAS_H);
   }
   ctx.globalAlpha = 1;
 
@@ -832,7 +933,7 @@ function drawBackground(ctx, lvl, camX, frame) {
     }
     ctx.globalAlpha = 1;
   } else if (lvl.hazard === "water") {
-    ctx.fillStyle = "#18FFFF";
+    ctx.fillStyle = "#5a8a95";
     for (let i = 0; i < 15; i++) {
       const bx = (i * 83 + frame * 0.2) % CANVAS_W;
       const by = CANVAS_H - 50 - ((i * 59 + frame * 0.6) % 300);
@@ -888,7 +989,7 @@ function drawHazard(ctx, hazard, camX, frame, lvl) {
       ctx.fillRect(x + i * 10, y - fh, 8, fh);
     }
   } else if (lvl.hazard === "poison") {
-    ctx.fillStyle = "#76FF03";
+    ctx.fillStyle = "#6b8f6b";
     ctx.fillRect(x, y, hazard.w, hazard.h);
     ctx.fillStyle = "#00E676";
     for (let i = 0; i < 3; i++) {
@@ -910,33 +1011,45 @@ function drawPlatform(ctx, plat, camX, lvl, frame) {
   if (x > CANVAS_W + 50 || x + plat.w < -50) return;
 
   if (plat.type === "ground") {
-    ctx.fillStyle = "rgba(0,0,0,0.25)";
-    ctx.fillRect(x, plat.y + plat.h, plat.w, 2);
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.fillRect(x, plat.y + plat.h, plat.w, 4);
     ctx.fillStyle = lvl.platform;
     ctx.fillRect(x, plat.y, plat.w, plat.h);
-    ctx.fillStyle = lvl.accent + "60";
-    ctx.fillRect(x, plat.y, plat.w, 3);
-    ctx.fillStyle = lvl.accent + "99";
+    ctx.fillStyle = "rgba(0,0,0,0.15)";
+    ctx.fillRect(x, plat.y + plat.h - 6, plat.w, 6);
+    ctx.fillStyle = lvl.accent + "70";
+    ctx.fillRect(x, plat.y, plat.w, 4);
+    ctx.fillStyle = "rgba(255,255,255,0.25)";
     ctx.fillRect(x, plat.y, plat.w, 2);
   } else if (plat.type === "float") {
+    ctx.shadowColor = lvl.accent;
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = lvl.accent + "25";
+    ctx.fillRect(x - 2, plat.y - 4, plat.w + 4, plat.h + 8);
+    ctx.shadowBlur = 0;
     ctx.fillStyle = "rgba(0,0,0,0.2)";
     ctx.fillRect(x, plat.y + plat.h, plat.w, 2);
     ctx.fillStyle = lvl.platform;
     ctx.fillRect(x, plat.y, plat.w, plat.h);
-    ctx.fillStyle = lvl.accent + "40";
-    ctx.fillRect(x + 2, plat.y + 2, plat.w - 4, 3);
-    ctx.fillStyle = lvl.accent + "99";
+    ctx.fillStyle = lvl.accent + "50";
+    ctx.fillRect(x + 2, plat.y + 2, plat.w - 4, 4);
+    ctx.fillStyle = "rgba(255,255,255,0.2)";
     ctx.fillRect(x + 2, plat.y + 2, plat.w - 4, 2);
     ctx.shadowColor = lvl.accent;
-    ctx.shadowBlur = 6;
-    ctx.fillStyle = lvl.accent + "20";
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = lvl.accent + "30";
     ctx.fillRect(x, plat.y - 2, plat.w, 2);
     ctx.shadowBlur = 0;
   } else if (plat.type === "moving") {
+    ctx.shadowColor = lvl.accent;
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = lvl.accent + "40";
+    ctx.fillRect(x - 1, plat.y - 2, plat.w + 2, plat.h + 4);
+    ctx.shadowBlur = 0;
     ctx.fillStyle = lvl.accent;
     ctx.fillRect(x, plat.y, plat.w, plat.h);
-    ctx.fillStyle = "#FFF3";
-    ctx.fillRect(x + 4, plat.y + 3, plat.w - 8, 3);
+    ctx.fillStyle = "rgba(255,255,255,0.35)";
+    ctx.fillRect(x, plat.y, plat.w, 3);
     ctx.fillStyle = "#FFF6";
     const arrowBob = Math.sin(frame * 0.1) * 3;
     ctx.beginPath();
@@ -963,10 +1076,11 @@ function drawCoin(ctx, coin, camX, frame, lvl) {
   ctx.scale(scale, scale);
   ctx.translate(-x, -y);
 
+  const pulse = coin.collected ? 1 : 0.8 + 0.2 * Math.sin(frame * 0.12 + coin.bobOffset);
   ctx.globalAlpha = coin.collectAnim ? coin.collectAnim / 5 : 1;
-  ctx.fillStyle = "#FFD700";
-  ctx.shadowColor = "#FFD700";
-  ctx.shadowBlur = 8;
+  ctx.fillStyle = "#c4a35a";
+  ctx.shadowColor = "#c4a35a";
+  ctx.shadowBlur = 6 + pulse * 10;
   ctx.beginPath();
   ctx.arc(x, y, 8, 0, Math.PI * 2);
   ctx.fill();
@@ -980,11 +1094,19 @@ function drawCoin(ctx, coin, camX, frame, lvl) {
 }
 
 function drawScroll(ctx, scroll, camX, frame, lvl) {
-  if (scroll.collected) return;
+  if (scroll.collected && (!scroll.collectAnim || scroll.collectAnim <= 0)) return;
   const x = scroll.x - camX + scroll.w / 2;
-  const y = scroll.y + scroll.h / 2 + Math.sin(frame * 0.06) * 2;
+  const y = scroll.y + scroll.h / 2 + (scroll.collectAnim ? 0 : Math.sin(frame * 0.06) * 2);
   if (x > CANVAS_W + 30 || x < -30) return;
+  let scale = 1;
+  if (scroll.collected && scroll.collectAnim > 0) {
+    scale = 1.15 + (1 - scroll.collectAnim / 8) * 0.35;
+  }
   ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+  ctx.translate(-x, -y);
+  ctx.globalAlpha = scroll.collectAnim ? scroll.collectAnim / 8 : 1;
   ctx.fillStyle = lvl.accent + "40";
   ctx.strokeStyle = lvl.accent;
   ctx.lineWidth = 2;
@@ -998,13 +1120,19 @@ function drawScroll(ctx, scroll, camX, frame, lvl) {
 }
 
 function drawHeart(ctx, heart, camX, frame, lvl) {
-  if (heart.collected) return;
+  if (heart.collected && (!heart.collectAnim || heart.collectAnim <= 0)) return;
   const x = heart.x - camX + 12;
-  const y = heart.y + 12 + Math.sin(frame * 0.06 + heart.bobOffset) * 3;
+  const y = heart.y + 12 + (heart.collectAnim ? 0 : Math.sin(frame * 0.06 + heart.bobOffset) * 3);
   if (x > CANVAS_W + 24 || x < -24) return;
 
+  let scale = 1;
+  if (heart.collected && heart.collectAnim > 0) {
+    scale = 1.2 + (1 - heart.collectAnim / 8) * 0.4;
+  }
   ctx.save();
   ctx.translate(x, y);
+  ctx.scale(scale, scale);
+  ctx.globalAlpha = heart.collectAnim ? heart.collectAnim / 8 : 1;
   ctx.fillStyle = "#E53935";
   ctx.strokeStyle = "#B71C1C";
   ctx.lineWidth = 2;
@@ -1044,6 +1172,7 @@ export default function Game() {
   const [sfxVolume, setSfxVolume] = useState(1);
   const [musicVolume, setMusicVolume] = useState(1);
   const [reduceShake, setReduceShake] = useState(1);
+  const [deathFlavorIndex, setDeathFlavorIndex] = useState(0);
 
   const gameRef = useRef({
     keys: {},
@@ -1078,6 +1207,7 @@ export default function Game() {
     slashTrail: [],
     runDustTimer: 0,
     victoryFlashFrames: 0,
+    beatBossTransitionFrames: 0,
     lastDashTime: 0,
     lastDashDir: 0,
     jumpBufferTimer: 0,
@@ -1087,6 +1217,10 @@ export default function Game() {
     levelIntroLineTimer: 0,
     loreLine: null,
     loreLineTimer: 0,
+    bossPhaseLineTimer: 0,
+    perfectDodgeFrames: 0,
+    perfectDodgeThisDodge: false,
+    lastEnemyKillFrames: 0,
     lastSurface: "ground",
   });
 
@@ -1139,11 +1273,13 @@ export default function Game() {
     const g = gameRef.current;
     const handleKeyDown = (e) => {
       g.keys[e.code] = true;
-      if (e.code === "Space" || e.code === "ArrowUp" || e.code === "ArrowDown") e.preventDefault();
+      if (e.key === "Shift") g.keys["Shift"] = true;
+      if (e.code === "Space" || e.code === "ArrowUp" || e.code === "ArrowDown" || e.code === "ShiftLeft" || e.code === "ShiftRight") e.preventDefault();
     };
     const handleKeyUp = (e) => {
       if (e.code === "Space" || e.code === "ArrowUp" || e.code === "KeyW") g.jumpKeyReleased = true;
       g.keys[e.code] = false;
+      if (e.key === "Shift") g.keys["Shift"] = false;
     };
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
@@ -1190,8 +1326,15 @@ export default function Game() {
     g.slashTrail = [];
     g.runDustTimer = 0;
     g.victoryFlashFrames = 0;
+    g.beatBossTransitionFrames = 0;
     g.bossIntroTimer = 0;
+    g.bossPhaseLineTimer = 0;
+    g.perfectDodgeFrames = 0;
+    g.perfectDodgeThisDodge = false;
+    g.lastEnemyKillFrames = 0;
     g.levelIntroLineTimer = 90;
+    const introOpts = LEVEL_INTRO_LINES[levelId];
+    g.levelIntroLine = Array.isArray(introOpts) ? introOpts[Math.floor(Math.random() * introOpts.length)] : (introOpts ?? "The path awaits.");
     g.loreLine = null;
     g.loreLineTimer = 0;
     setScreen("game");
@@ -1217,6 +1360,7 @@ export default function Game() {
       if (paused && g.keys["KeyQ"]) { setScreen("title"); setPaused(false); g.keys["KeyQ"] = false; }
 
       const levelData = LEVELS[lvl.levelId];
+      const boss = lvl?.boss;
 
       if (!paused) {
       const inHitStop = g.hitStopFrames > 0;
@@ -1267,7 +1411,7 @@ export default function Game() {
           for (let i = 0; i < 5; i++) g.particles.push(new Particle(p.x + 16, p.y + p.h, "#FFF", (Math.random() - 0.5) * 3, Math.random() * -2, 20, 3));
         }
       }
-      if (!isRolling && (g.keys["ShiftLeft"] || g.keys["ShiftRight"]) && p.dodgeRollCooldown <= 0) {
+      if (!isRolling && (g.keys["ShiftLeft"] || g.keys["ShiftRight"] || g.keys["Shift"]) && p.dodgeRollCooldown <= 0) {
         if (p.attacking > 0) { p.attacking = 0; p.attackCooldown = 0; }
         p.dodgeRollFrames = DODGE_ROLL_FRAMES;
         if (musicOn) g.music.playFootstep("ground", sfxVolume);
@@ -1309,6 +1453,7 @@ export default function Game() {
         if (p.attackType === 2) p.specialCooldown = p.specialCooldownMax;
         p.attackTypeUsed = p.attackType;
         p.attackDmgMult = at.dmgMult;
+        p.anticipationDone = false;
         if (musicOn) g.music.playHit();
         const count = p.attackType === 2 || charged ? 14 : 8;
         for (let i = 0; i < count; i++) {
@@ -1326,6 +1471,7 @@ export default function Game() {
       if (g.timeScaleTimer > 0) { g.timeScaleTimer--; g.timeScale += (1 - g.timeScale) * 0.15; }
       else g.timeScale = 1;
       const dt = g.timeScale;
+      if (p.dodgeRollFrames <= 0) g.perfectDodgeThisDodge = false;
       if (p.dashFrames > 0 || p.dodgeRollFrames > 0) {
         p.vx = 0;
         p.vy = 0;
@@ -1337,7 +1483,14 @@ export default function Game() {
       p.x += p.vx * dt; p.y += p.vy * dt;
       if (p.vx > p.speed) p.vx = p.speed;
       if (p.vx < -p.speed) p.vx = -p.speed;
-      if (p.attacking > 0) p.attacking--;
+      if (p.attacking > 0) {
+        p.attacking--;
+        // Anticipation: brief freeze 2 frames before hit on Slow/Special
+        if (p.attacking === p.attackHitFrame + 2 && !p.anticipationDone && (p.attackTypeUsed === 1 || p.attackTypeUsed === 2)) {
+          p.anticipationDone = true;
+          g.hitStopFrames = Math.max(g.hitStopFrames, 4);
+        }
+      }
       if (p.attackCooldown > 0) p.attackCooldown--;
       if (p.specialCooldown > 0) p.specialCooldown--;
       if (p.hurt > 0) p.hurt--;
@@ -1437,31 +1590,36 @@ export default function Game() {
           coin.collectAnim = 5;
           setScore((s) => s + 10);
           if (musicOn) g.music.playCoin();
-          for (let i = 0; i < 12; i++) g.particles.push(new Particle(coin.x, coin.y, "#FFD700", (Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8 - 2, 25, 3));
+          for (let i = 0; i < 12; i++) g.particles.push(new Particle(coin.x, coin.y, "#c4a35a", (Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8 - 2, 25, 3));
         }
       });
 
       // Healing items
       lvl.hearts.forEach((heart) => {
-        if (heart.collected) return;
+        if (heart.collected && (!heart.collectAnim || heart.collectAnim <= 0)) return;
+        if (heart.collected && heart.collectAnim > 0) { heart.collectAnim--; return; }
         const dx = p.x + 16 - (heart.x + 12);
         const dy = p.y + 18 - (heart.y + 12);
         if (Math.abs(dx) < 28 && Math.abs(dy) < 32) {
           heart.collected = true;
+          heart.collectAnim = 8;
           p.health = Math.min(p.health + heart.healAmount, p.maxHealth);
           if (musicOn) g.music.playHeal();
-          for (let i = 0; i < 10; i++) g.particles.push(new Particle(heart.x + 12, heart.y + 12, "#FF6B6B", (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6 - 3, 22, 3));
+          for (let i = 0; i < 14; i++) g.particles.push(new Particle(heart.x + 12, heart.y + 12, "#FF6B6B", (Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8 - 4, 25, 4));
         }
       });
 
       // Lore scrolls
       (lvl.scrolls || []).forEach((scroll) => {
-        if (scroll.collected) return;
+        if (scroll.collected && (!scroll.collectAnim || scroll.collectAnim <= 0)) return;
+        if (scroll.collected && scroll.collectAnim > 0) { scroll.collectAnim--; return; }
         if (p.x + p.w > scroll.x && p.x < scroll.x + scroll.w && p.y + p.h > scroll.y && p.y < scroll.y + scroll.h) {
           scroll.collected = true;
+          scroll.collectAnim = 8;
           g.loreLine = scroll.text;
           g.loreLineTimer = 180;
           if (musicOn) g.music.playCoin();
+          for (let i = 0; i < 12; i++) g.particles.push(new Particle(scroll.x + scroll.w / 2, scroll.y + scroll.h / 2, levelData.accent, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6 - 3, 22, 3));
         }
       });
 
@@ -1511,7 +1669,18 @@ export default function Game() {
             enemy.alive = false;
             setScore((s) => s + 50);
             for (let i = 0; i < 18; i++) g.particles.push(new Particle(enemy.x + 16, enemy.y + 18, levelData.accent, (Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8, 35, 5));
+            const remaining = lvl.enemies.filter((e) => e.alive).length;
+            if (remaining === 0) {
+              addShake(g, 12);
+              g.lastEnemyKillFrames = 90;
+              for (let i = 0; i < 25; i++) g.particles.push(new Particle(enemy.x + 16, enemy.y + 18, "#c4a35a", (Math.random() - 0.5) * 12, (Math.random() - 0.5) * 12 - 4, 35, 5));
+            }
           }
+        } else if (overlap && p.invincible > 0 && p.dodgeRollFrames > 0 && !g.perfectDodgeThisDodge) {
+          g.perfectDodgeThisDodge = true;
+          g.perfectDodgeFrames = 90;
+          g.timeScale = 0.35;
+          g.timeScaleTimer = 28;
         } else if (overlap && p.invincible <= 0 && !p.shieldActive) {
           p.health -= 10 + lvl.levelId * 2; p.hurt = 20; p.invincible = 60; p.vy = -6;
           p.vx = (p.x < enemy.x ? -1 : 1) * 5;
@@ -1527,19 +1696,24 @@ export default function Game() {
           g.damageNumbers.push({ x: enemy.x + 16, y: enemy.y - 10, value: dmg, life: 45, vy: -1.5, critical: isCrit });
           g.comboCount++; g.comboTimer = 90; setScore((s) => s + 5 * g.comboCount);
           const particleCount = isCrit || p.chargedAttack ? 18 : 10;
-          for (let i = 0; i < particleCount; i++) g.particles.push(new Particle(enemy.x + 16, enemy.y + 18, isCrit ? "#FFD700" : (i % 2 === 0 ? "#FFF" : CHARACTERS[p.charId].accent), (Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8, 20, 4));
+          for (let i = 0; i < particleCount; i++) g.particles.push(new Particle(enemy.x + 16, enemy.y + 18, isCrit ? "#c4a35a" : (i % 2 === 0 ? "#FFF" : CHARACTERS[p.charId].accent), (Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8, 20, 4));
           addShake(g, isCrit || p.chargedAttack ? 6 : 4);
           g.hitStopFrames = HITSTOP_ENEMY + (isCrit ? CRITICAL_HITSTOP_EXTRA : 0) + (p.chargedAttack ? 2 : 0);
           if (enemy.health <= 0) {
             enemy.alive = false; setScore((s) => s + 50);
             for (let i = 0; i < 20; i++) g.particles.push(new Particle(enemy.x + 16, enemy.y + 18, levelData.accent, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10, 40, 5));
+            const remaining = lvl.enemies.filter((e) => e.alive).length;
+            if (remaining === 0) {
+              addShake(g, 12);
+              g.lastEnemyKillFrames = 90;
+              for (let i = 0; i < 25; i++) g.particles.push(new Particle(enemy.x + 16, enemy.y + 18, "#c4a35a", (Math.random() - 0.5) * 12, (Math.random() - 0.5) * 12 - 4, 35, 5));
+            }
           }
         }
       });
 
       // BOSS
-      const boss = lvl.boss;
-      if (boss.alive && p.x > boss.x - 400) {
+      if (boss && boss.alive && p.x > boss.x - 400) {
         g.bossActive = true;
         if (g.bossIntroTimer === 0) g.bossIntroTimer = 150;
         if (g.bossDisplayedHp <= 0) { g.bossDisplayedHp = boss.health; g.bossGhostHp = boss.maxHealth; }
@@ -1594,11 +1768,12 @@ export default function Game() {
             boss.phaseTriggered = true;
             g.timeScale = TIME_SCALE_SLOW; g.timeScaleTimer = TIME_SCALE_DURATION;
             addShake(g, 8); g.bossPhaseFlash = 5;
+            g.bossPhaseLineTimer = 90;
           }
           addShake(g, isCrit || p.chargedAttack ? 10 : 6);
           g.hitStopFrames = HITSTOP_BOSS + (isCrit ? CRITICAL_HITSTOP_EXTRA : 0) + (p.chargedAttack ? 2 : 0);
           const bossParticleCount = isCrit || p.chargedAttack ? 25 : 15;
-          for (let i = 0; i < bossParticleCount; i++) g.particles.push(new Particle(boss.x + boss.w / 2, boss.y + boss.h / 2, isCrit ? "#FFD700" : (i % 2 === 0 ? "#FFF" : levelData.accent), (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10, 25, 5));
+          for (let i = 0; i < bossParticleCount; i++) g.particles.push(new Particle(boss.x + boss.w / 2, boss.y + boss.h / 2, isCrit ? "#c4a35a" : (i % 2 === 0 ? "#FFF" : levelData.accent), (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10, 25, 5));
 
           if (boss.health <= 0) {
             boss.alive = false;
@@ -1607,8 +1782,9 @@ export default function Game() {
             setScore((s) => s + 500 + lvl.levelId * 100);
             addShake(g, 20);
             for (let i = 0; i < 60; i++) g.particles.push(new Particle(boss.x + boss.w / 2, boss.y + boss.h / 2, ["#FF0", "#F80", "#F00", "#FFF", levelData.accent][i % 5], (Math.random() - 0.5) * 15, (Math.random() - 0.5) * 15, 60, 6));
-            for (let i = 0; i < 40; i++) g.particles.push(new Particle(boss.x + boss.w / 2, boss.y + boss.h / 2, ["#FFD700", "#FFF", levelData.accent, "#FF6B9D"][i % 4], (Math.random() - 0.5) * 12, (Math.random() - 0.5) * 12 - 4, 50, 4));
+            for (let i = 0; i < 40; i++) g.particles.push(new Particle(boss.x + boss.w / 2, boss.y + boss.h / 2, ["#c4a35a", "#e0d8c8", levelData.accent, "#a87a7a"][i % 4], (Math.random() - 0.5) * 12, (Math.random() - 0.5) * 12 - 4, 50, 4));
             g.victoryFlashFrames = VICTORY_FLASH_FRAMES;
+            g.beatBossTransitionFrames = 120;
             if (!g.transitioning) {
               g.transitioning = true;
               setTimeout(() => {
@@ -1634,6 +1810,7 @@ export default function Game() {
         setTimeout(() => {
           if (!running) return;
           g.music.stop();
+          setDeathFlavorIndex(Math.floor(Math.random() * DEATH_SCREEN_LINES.length));
           setScreen("death");
         }, 1000);
       }
@@ -1661,6 +1838,10 @@ export default function Game() {
       if (g.bossIntroTimer > 0) g.bossIntroTimer--;
       if (g.levelIntroLineTimer > 0) g.levelIntroLineTimer--;
       if (g.loreLineTimer > 0) g.loreLineTimer--;
+      if (g.beatBossTransitionFrames > 0) g.beatBossTransitionFrames--;
+      if (g.bossPhaseLineTimer > 0) g.bossPhaseLineTimer--;
+      if (g.perfectDodgeFrames > 0) g.perfectDodgeFrames--;
+      if (g.lastEnemyKillFrames > 0) g.lastEnemyKillFrames--;
 
       // Damage numbers update
       g.damageNumbers = g.damageNumbers.filter((d) => {
@@ -1669,7 +1850,6 @@ export default function Game() {
       });
 
       // Boss bar smooth drain
-      const boss = lvl?.boss;
       if (boss && g.bossActive && boss.alive) {
         g.bossDisplayedHp += (boss.health - g.bossDisplayedHp) * BOSS_HP_DRAIN_RATE;
         if (g.bossGhostHp < g.bossDisplayedHp) g.bossGhostHp = g.bossDisplayedHp;
@@ -1687,13 +1867,15 @@ export default function Game() {
       drawBackground(ctx, levelData, g.camX, g.frame);
       if (Math.abs(p.vx) > SPEED_LINE_VX_THRESHOLD) {
         ctx.save();
-        ctx.strokeStyle = "rgba(255,255,255,0.12)";
-        ctx.lineWidth = 1;
-        for (let i = 0; i < 12; i++) {
-          const sx = (p.x - g.camX) + (i - 6) * 35;
-          const sy = p.y + 18 + (i % 3) * 30;
-          const len = 15 + (i % 4) * 8;
+        const acc = CHARACTERS[p.charId]?.accent || "#c4a35a";
+        const speedAlpha = Math.min(0.35, 0.1 + (Math.abs(p.vx) - SPEED_LINE_VX_THRESHOLD) * 0.04);
+        for (let i = 0; i < 14; i++) {
+          const sx = (p.x - g.camX) + (i - 7) * 32;
+          const sy = p.y + 18 + (i % 3) * 28;
+          const len = 18 + (i % 5) * 10;
           const dir = p.vx > 0 ? -1 : 1;
+          ctx.strokeStyle = i % 2 === 0 ? `rgba(255,255,255,${speedAlpha * 0.8})` : acc + "50";
+          ctx.lineWidth = 1.5;
           ctx.beginPath();
           ctx.moveTo(sx, sy);
           ctx.lineTo(sx + len * dir, sy);
@@ -1707,14 +1889,14 @@ export default function Game() {
       lvl.hearts.forEach((heart) => drawHeart(ctx, heart, g.camX, g.frame, levelData));
       if (lvl.scrolls) lvl.scrolls.forEach((scroll) => drawScroll(ctx, scroll, g.camX, g.frame, levelData));
       lvl.enemies.forEach((enemy) => drawEnemy(ctx, enemy, g.camX, g.frame, lvl.levelId));
-      if (g.bossActive) drawBoss(ctx, boss, g.camX, g.frame, lvl.levelId);
+      if (g.bossActive && boss) drawBoss(ctx, boss, g.camX, g.frame, lvl.levelId);
       if (g.slashTrail && g.slashTrail.length > 0) {
         g.slashTrail.forEach((t) => {
           const tx = t.x - g.camX;
           if (tx < -20 || tx > CANVAS_W + 20) return;
           ctx.save();
           ctx.globalAlpha = t.alpha;
-          ctx.strokeStyle = CHARACTERS[p.charId]?.accent || "#FFD700";
+          ctx.strokeStyle = CHARACTERS[p.charId]?.accent || "#c4a35a";
           ctx.lineWidth = 4;
           ctx.beginPath();
           ctx.moveTo(tx, t.y);
@@ -1725,9 +1907,28 @@ export default function Game() {
       }
       drawCharacter(ctx, p.x - g.camX, p.y, p.charId, p.facing, p.frame, p.attacking, p.hurt, p.landSquashFrames || 0, p.jumpStretchFrames || 0, p.dodgeRollFrames || 0);
 
+      // Charge attack wind-up (glow while holding Z)
+      if (p.attackCharge > 0 && p.attacking <= 0 && p.attackType < 2) {
+        const t = Math.min(1, p.attackCharge / CHARGE_ATTACK_FRAMES);
+        const px = p.x - g.camX + 16 + p.facing * 12;
+        const py = p.y + 14;
+        ctx.save();
+        ctx.globalAlpha = 0.4 + t * 0.4;
+        ctx.strokeStyle = CHARACTERS[p.charId]?.accent ?? "#c4a35a";
+        ctx.lineWidth = 2 + t * 3;
+        ctx.shadowColor = CHARACTERS[p.charId]?.accent ?? "#c4a35a";
+        ctx.shadowBlur = 8 + t * 12;
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(px + p.facing * (20 + t * 25), py - 4);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.restore();
+      }
+
       if (p.shieldActive) {
-        ctx.strokeStyle = "#FFD70080"; ctx.lineWidth = 3;
-        ctx.shadowColor = "#FFD700"; ctx.shadowBlur = 15;
+        ctx.strokeStyle = "#a8906080"; ctx.lineWidth = 3;
+        ctx.shadowColor = "#c4a35a"; ctx.shadowBlur = 15;
         ctx.beginPath(); ctx.arc(p.x - g.camX + 16, p.y + 18, 28, 0, Math.PI * 2); ctx.stroke();
         ctx.shadowBlur = 0;
       }
@@ -1738,7 +1939,7 @@ export default function Game() {
         if (sx < -30 || sx > CANVAS_W + 30) return;
         ctx.save();
         ctx.globalAlpha = Math.min(1, d.life / 40);
-        ctx.fillStyle = d.critical ? "#FFD700" : "#FFF";
+        ctx.fillStyle = d.critical ? "#c4a35a" : "#FFF";
         ctx.strokeStyle = d.critical ? "#B8860B" : "#000";
         ctx.lineWidth = d.critical ? 3 : 2;
         ctx.font = d.critical ? "bold 22px monospace" : "bold 16px monospace";
@@ -1762,6 +1963,44 @@ export default function Game() {
         ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
       }
 
+      // Low HP pulse (subtle red screen edge)
+      const displayPctHud = Math.max(0, Math.min(1, g.displayedHp / p.maxHealth));
+      if (displayPctHud <= LOW_HP_THRESHOLD && displayPctHud > 0) {
+        const pulse = 0.08 + 0.06 * Math.sin(g.frame * 0.25);
+        ctx.fillStyle = `rgba(180,0,0,${pulse})`;
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+      }
+
+      // Perfect dodge "NARROW!"
+      if (g.perfectDodgeFrames > 0) {
+        const alpha = Math.min(1, g.perfectDodgeFrames / 15, (90 - g.perfectDodgeFrames) / 20);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = "#FFF";
+        ctx.strokeStyle = "#c4a35a";
+        ctx.lineWidth = 3;
+        ctx.font = "bold 28px monospace";
+        ctx.textAlign = "center";
+        ctx.strokeText("NARROW!", CANVAS_W / 2, CANVAS_H / 2 - 80);
+        ctx.fillText("NARROW!", CANVAS_W / 2, CANVAS_H / 2 - 80);
+        ctx.restore();
+      }
+
+      // Last enemy "CLEAR!"
+      if (g.lastEnemyKillFrames > 0) {
+        const alpha = Math.min(1, g.lastEnemyKillFrames / 20, (90 - g.lastEnemyKillFrames) / 25);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = "#c4a35a";
+        ctx.strokeStyle = "#1a0a00";
+        ctx.lineWidth = 2;
+        ctx.font = "bold 22px monospace";
+        ctx.textAlign = "center";
+        ctx.strokeText("CLEAR!", CANVAS_W / 2, CANVAS_H / 2 - 100);
+        ctx.fillText("CLEAR!", CANVAS_W / 2, CANVAS_H / 2 - 100);
+        ctx.restore();
+      }
+
       // Victory flash (gold burst when boss dies)
       if (g.victoryFlashFrames > 0) {
         ctx.fillStyle = `rgba(255,215,0,${g.victoryFlashFrames / VICTORY_FLASH_FRAMES * 0.4})`;
@@ -1769,13 +2008,63 @@ export default function Game() {
         g.victoryFlashFrames--;
       }
 
-      // Vignette
-      const vig = ctx.createRadialGradient(CANVAS_W / 2, CANVAS_H / 2, CANVAS_W * 0.2, CANVAS_W / 2, CANVAS_H / 2, CANVAS_W * 0.8);
+      // Boss defeated: show "REALM CONQUERED" and next level for the full 2s transition
+      if (g.beatBossTransitionFrames > 0) {
+        const fadeIn = Math.min(1, (120 - g.beatBossTransitionFrames) / 25);
+        const fadeOut = Math.min(1, g.beatBossTransitionFrames / 30);
+        const alpha = fadeIn * fadeOut;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = "rgba(0,0,0,0.5)";
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        ctx.fillStyle = "#5a7a5a";
+        ctx.font = "bold 36px monospace";
+        ctx.textAlign = "center";
+        ctx.shadowColor = "#5a7a5a";
+        ctx.shadowBlur = 20;
+        ctx.fillText("REALM CONQUERED!", CANVAS_W / 2, CANVAS_H / 2 - 30);
+        ctx.shadowBlur = 0;
+        const hero = CHARACTERS[p.charId];
+        if (hero?.bossKill) {
+          ctx.fillStyle = hero.accent ?? "#c4a35a";
+          ctx.font = "14px monospace";
+          ctx.fillText(`"${hero.bossKill}" — ${hero.name}`, CANVAS_W / 2, CANVAS_H / 2 + 0);
+        }
+        const nextLevel = LEVELS[lvl.levelId + 1];
+        if (nextLevel) {
+          ctx.fillStyle = "#c4a35a";
+          ctx.font = "bold 20px monospace";
+          ctx.fillText("Next: " + nextLevel.name, CANVAS_W / 2, CANVAS_H / 2 + (hero?.bossKill ? 22 : 15));
+          ctx.fillStyle = "rgba(255,255,255,0.8)";
+          ctx.font = "14px monospace";
+          ctx.fillText("Loading next realm...", CANVAS_W / 2, CANVAS_H / 2 + (hero?.bossKill ? 62 : 55));
+        } else {
+          ctx.fillStyle = "#c4a35a";
+          ctx.font = "bold 20px monospace";
+          ctx.fillText("Final realm defeated!", CANVAS_W / 2, CANVAS_H / 2 + (hero?.bossKill ? 22 : 15));
+        }
+        ctx.textAlign = "left";
+        ctx.restore();
+      }
+
+      // Vignette (stronger, slight color tint)
+      const vig = ctx.createRadialGradient(CANVAS_W / 2, CANVAS_H / 2, CANVAS_W * 0.25, CANVAS_W / 2, CANVAS_H / 2, CANVAS_W * 0.85);
       vig.addColorStop(0, "transparent");
-      vig.addColorStop(0.6, "transparent");
-      vig.addColorStop(1, "rgba(0,0,0,0.45)");
+      vig.addColorStop(0.5, "transparent");
+      vig.addColorStop(0.85, "rgba(0,0,0,0.35)");
+      vig.addColorStop(1, "rgba(0,0,0,0.65)");
       ctx.fillStyle = vig;
       ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+      // Subtle film grain (deterministic, no flicker)
+      ctx.globalAlpha = 0.045;
+      for (let gi = 0; gi < 150; gi++) {
+        const gx = ((gi * 79 + g.frame) % (CANVAS_W + 24)) - 12;
+        const gy = ((gi * 53 + g.frame * 1.1) % (CANVAS_H + 24)) - 12;
+        ctx.fillStyle = (gi * 7 + (g.frame >> 1) + (gx ^ gy)) % 3 === 0 ? "#FFF" : "#000";
+        ctx.fillRect(gx, gy, 1, 1);
+      }
+      ctx.globalAlpha = 1;
 
       // Combo edge glow
       if (g.comboCount >= 3) {
@@ -1785,19 +2074,28 @@ export default function Game() {
         ctx.strokeRect(6, 6, CANVAS_W - 12, CANVAS_H - 12);
       }
 
-      // HUD (smooth drain + ghost bar)
-      ctx.fillStyle = "#00000080"; ctx.fillRect(10, 10, 204, 24);
-      ctx.fillStyle = "#333"; ctx.fillRect(12, 12, 200, 20);
+      // HUD (smooth drain + ghost bar, slight glow)
+      ctx.shadowColor = "#000";
+      ctx.shadowBlur = 4;
+      ctx.fillStyle = "#000000B0"; ctx.fillRect(10, 10, 204, 24);
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = "rgba(255,255,255,0.15)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(10, 10, 204, 24);
+      ctx.fillStyle = "#222"; ctx.fillRect(12, 12, 200, 20);
       const ghostPct = Math.max(0, Math.min(1, g.ghostHp / p.maxHealth));
       const displayPct = Math.max(0, Math.min(1, g.displayedHp / p.maxHealth));
       ctx.fillStyle = "#660000";
       ctx.fillRect(12, 12, 200 * ghostPct, 20);
-      ctx.fillStyle = displayPct > 0.5 ? "#4CAF50" : displayPct > 0.25 ? "#FF9800" : "#F44336";
+      ctx.shadowColor = displayPct > 0.5 ? "#5a7a5a" : displayPct > 0.25 ? "#a87838" : "#8a4848";
+      ctx.shadowBlur = displayPct > 0 ? 8 : 0;
+      ctx.fillStyle = displayPct > 0.5 ? "#5a7a5a" : displayPct > 0.25 ? "#a87838" : "#8a4848";
       ctx.fillRect(12, 12, 200 * displayPct, 20);
-      ctx.strokeStyle = "#FFF"; ctx.lineWidth = 1; ctx.strokeRect(12, 12, 200, 20);
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.lineWidth = 1; ctx.strokeRect(12, 12, 200, 20);
       if (displayPct <= LOW_HP_THRESHOLD && displayPct > 0) {
         const pulse = 0.3 + 0.2 * Math.sin(g.frame * 0.2);
-        ctx.strokeStyle = `rgba(255,0,0,${pulse})`;
+        ctx.strokeStyle = `rgba(138,72,72,${pulse})`;
         ctx.lineWidth = 3;
         ctx.strokeRect(10, 8, 208, 28);
         ctx.strokeStyle = "#FFF";
@@ -1806,28 +2104,39 @@ export default function Game() {
       ctx.fillStyle = "#FFF"; ctx.font = "bold 13px monospace";
       ctx.fillText(`HP: ${Math.max(0, Math.ceil(p.health))}/${p.maxHealth}`, 20, 27);
 
-      ctx.fillStyle = "#FFD700"; ctx.font = "bold 16px monospace";
+      ctx.fillStyle = "#c4a35a"; ctx.font = "bold 16px monospace";
       ctx.fillText(`★ ${score}`, CANVAS_W - 120, 28);
       ctx.fillStyle = "#FF6B6B"; ctx.fillText(`♥ x${lives}`, CANVAS_W - 120, 52);
 
-      // Attack type selector (1 2 3)
-      ctx.font = "bold 12px monospace";
-      const atY = 42;
+      // Attack type selector + descriptions
+      ctx.fillStyle = "#888";
+      ctx.font = "10px monospace";
+      ctx.fillText("ATTACKS (1 2 3)", 12, 38);
+      const atY = 52;
       [0, 1, 2].forEach((i) => {
-        const label = ATTACK_TYPES[i].name.charAt(0);
+        const at = ATTACK_TYPES[i];
         const sel = p.attackType === i;
-        ctx.fillStyle = sel ? CHARACTERS[p.charId]?.accent ?? "#FFD700" : "#666";
-        ctx.fillText(`${i + 1}:${label}`, 12 + i * 52, atY);
+        ctx.fillStyle = sel ? CHARACTERS[p.charId]?.accent ?? "#c4a35a" : "#555";
+        ctx.font = sel ? "bold 11px monospace" : "11px monospace";
+        ctx.fillText(`${i + 1} ${at.name}`, 12 + i * 85, atY);
+        ctx.font = "10px monospace";
+        ctx.fillStyle = "#666";
+        ctx.fillText(`(${at.shortDesc})`, 12 + i * 85, atY + 11);
         if (sel) {
-          ctx.strokeStyle = CHARACTERS[p.charId]?.accent ?? "#FFD700";
+          ctx.strokeStyle = CHARACTERS[p.charId]?.accent ?? "#c4a35a";
           ctx.lineWidth = 2;
-          ctx.strokeRect(10 + i * 52, atY - 12, 32, 14);
+          ctx.strokeRect(10 + i * 85, atY - 10, 78, 24);
           ctx.lineWidth = 1;
         }
       });
+      const currentAt = ATTACK_TYPES[p.attackType];
+      ctx.fillStyle = "#AAA";
+      ctx.font = "9px monospace";
+      ctx.fillText(currentAt.longDesc, 12, atY + 28);
+      ctx.fillText("Z or J = Strike (hold to charge on 1 & 2)", 12, atY + 40);
       // Special cooldown gauge (for attack type 3)
       const gaugeX = 12;
-      const gaugeY = 58;
+      const gaugeY = 98;
       const gaugeW = 120;
       const gaugeH = 8;
       ctx.fillStyle = "#00000099";
@@ -1835,14 +2144,14 @@ export default function Game() {
       ctx.fillStyle = "#333";
       ctx.fillRect(gaugeX + 2, gaugeY + 2, gaugeW, gaugeH);
       const specialReady = 1 - (p.specialCooldown / (p.specialCooldownMax || 1));
-      ctx.fillStyle = specialReady >= 1 ? "#4CAF50" : "#555";
+      ctx.fillStyle = specialReady >= 1 ? "#5a7a5a" : "#555";
       ctx.fillRect(gaugeX + 2, gaugeY + 2, gaugeW * Math.max(0, specialReady), gaugeH);
-      ctx.strokeStyle = "#FFF";
+      ctx.strokeStyle = "rgba(255,255,255,0.4)";
       ctx.lineWidth = 1;
       ctx.strokeRect(gaugeX + 2, gaugeY + 2, gaugeW, gaugeH);
-      ctx.fillStyle = "#AAA";
+      ctx.fillStyle = "#888";
       ctx.font = "10px monospace";
-      ctx.fillText("Special", gaugeX + 4, gaugeY + gaugeH + 14);
+      ctx.fillText("Special (3) — ready when full", gaugeX + 4, gaugeY + gaugeH + 12);
 
       if (g.levelTitleTimer > 0) {
         const t = LEVEL_TITLE_DURATION - g.levelTitleTimer;
@@ -1868,7 +2177,13 @@ export default function Game() {
         ctx.fillStyle = "#FFF";
         ctx.font = "12px monospace";
         ctx.textAlign = "center";
-        ctx.fillText(LEVEL_INTRO_LINES[lvl.levelId] ?? "The path awaits.", CANVAS_W / 2, 48);
+        ctx.fillText(g.levelIntroLine ?? "The path awaits.", CANVAS_W / 2, 48);
+        const hero = CHARACTERS[p.charId];
+        if (hero.levelStart && g.levelIntroLineTimer > 50) {
+          ctx.fillStyle = hero.accent ?? "#c4a35a";
+          ctx.font = "11px monospace";
+          ctx.fillText(`"${hero.levelStart}"`, CANVAS_W / 2, 64);
+        }
         ctx.restore();
         ctx.textAlign = "left";
       }
@@ -1888,11 +2203,26 @@ export default function Game() {
         ctx.textAlign = "left";
       }
 
+      if (g.bossPhaseLineTimer > 0 && levelData.bossPhase2Line) {
+        const alpha = Math.min(1, g.bossPhaseLineTimer / 15, (90 - g.bossPhaseLineTimer) / 20);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = levelData.bossColor ?? levelData.accent;
+        ctx.font = "bold 14px monospace";
+        ctx.textAlign = "center";
+        ctx.shadowColor = levelData.bossColor ?? "#fff";
+        ctx.shadowBlur = 8;
+        ctx.fillText(levelData.bossPhase2Line, CANVAS_W / 2, CANVAS_H / 2 - 60);
+        ctx.shadowBlur = 0;
+        ctx.restore();
+        ctx.textAlign = "left";
+      }
+
       if (g.loreLineTimer > 0 && g.loreLine) {
         const alpha = Math.min(1, g.loreLineTimer / 20, (180 - g.loreLineTimer) / 20);
         ctx.save();
         ctx.globalAlpha = alpha;
-        ctx.fillStyle = "#FFD700";
+        ctx.fillStyle = "#c4a35a";
         ctx.font = "11px monospace";
         ctx.textAlign = "center";
         const wrap = g.loreLine.length > 50 ? g.loreLine.slice(0, 47) + "..." : g.loreLine;
@@ -1912,7 +2242,7 @@ export default function Game() {
       ctx.strokeRect(0, CANVAS_H - 6, CANVAS_W, 6);
 
       if (g.comboCount > 1) {
-        ctx.fillStyle = "#FFD700"; ctx.font = `bold ${16 + g.comboCount * 2}px monospace`;
+        ctx.fillStyle = "#c4a35a"; ctx.font = `bold ${16 + g.comboCount * 2}px monospace`;
         ctx.textAlign = "center"; ctx.fillText(`${g.comboCount}x COMBO!`, CANVAS_W / 2, 70); ctx.textAlign = "left";
       }
 
@@ -1924,24 +2254,24 @@ export default function Game() {
         ctx.fillStyle = "#333"; ctx.fillRect(CANVAS_W / 2 - 150, CANVAS_H - 38, 300, 24);
         ctx.fillStyle = "#660000";
         ctx.fillRect(CANVAS_W / 2 - 150, CANVAS_H - 38, 300 * bossGhostPct, 24);
-        ctx.fillStyle = "#D50000";
+        ctx.fillStyle = "#8a5050";
         ctx.fillRect(CANVAS_W / 2 - 150, CANVAS_H - 38, 300 * bossDisplayPct, 24);
-        ctx.strokeStyle = "#FFD700"; ctx.lineWidth = 2; ctx.strokeRect(CANVAS_W / 2 - 150, CANVAS_H - 38, 300, 24);
+        ctx.strokeStyle = "#c4a35a"; ctx.lineWidth = 2; ctx.strokeRect(CANVAS_W / 2 - 150, CANVAS_H - 38, 300, 24);
         ctx.fillStyle = "#FFF"; ctx.font = "bold 14px monospace"; ctx.textAlign = "center";
         ctx.fillText(b.name, CANVAS_W / 2, CANVAS_H - 22); ctx.textAlign = "left";
       }
 
       if (g.levelTimer < 300) {
         ctx.globalAlpha = Math.max(0, 1 - g.levelTimer / 300);
-        ctx.fillStyle = "#FFF"; ctx.font = "12px monospace"; ctx.textAlign = "center";
-        ctx.fillText("← → Move | ↑ Jump | 1/2/3 Attack | Z Strike | Shift Dodge roll" + (selectedChar === 5 ? " | X Shield" : ""), CANVAS_W / 2, CANVAS_H - 60);
+        ctx.fillStyle = "#FFF"; ctx.font = "10px monospace"; ctx.textAlign = "center";
+        ctx.fillText("← → Move   ↑ Jump   1 2 3 = attack type   Z = strike (hold to charge)   Shift = dodge" + (selectedChar === 5 ? "   X = shield" : ""), CANVAS_W / 2, CANVAS_H - 60);
         ctx.textAlign = "left"; ctx.globalAlpha = 1;
       }
 
       if (paused) {
         ctx.fillStyle = "rgba(0,0,0,0.7)";
         ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-        ctx.fillStyle = "#FFD700";
+        ctx.fillStyle = "#c4a35a";
         ctx.font = "bold 28px monospace";
         ctx.textAlign = "center";
         ctx.fillText("PAUSED", CANVAS_W / 2, CANVAS_H / 2 - 50);
@@ -1967,38 +2297,39 @@ export default function Game() {
   // ============================================================
   // RENDER UI
   // ============================================================
-  const titleGradient = "linear-gradient(135deg, #0a0a2e 0%, #1a0a3e 30%, #2a1a4e 60%, #0a1a3e 100%)";
+  const titleGradient = "linear-gradient(135deg, #1c1812 0%, #2a241a 40%, #352e22 70%, #242018 100%)";
 
   if (screen === "title") {
     return (
-      <div style={{ width: CANVAS_W, height: CANVAS_H, margin: "0 auto", background: titleGradient, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Courier New', monospace", position: "relative", overflow: "hidden", borderRadius: 8, border: "2px solid #FFD70040" }}>
+      <div style={{ width: CANVAS_W, height: CANVAS_H, margin: "0 auto", background: titleGradient, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Courier New', monospace", position: "relative", overflow: "hidden", borderRadius: 8, border: "2px solid #8a7a5a60" }}>
         <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
           {Array.from({ length: 30 }, (_, i) => (
-            <div key={i} style={{ position: "absolute", left: `${(i * 37) % 100}%`, top: `${(i * 53) % 100}%`, width: 2 + (i % 3), height: 2 + (i % 3), background: ["#FFD700", "#FF6B9D", "#4A90D9", "#7CFC00"][i % 4], borderRadius: "50%", opacity: 0.3 + (i % 5) * 0.1, animation: `float ${3 + (i % 4)}s ease-in-out infinite alternate`, animationDelay: `${i * 0.2}s` }} />
+            <div key={i} style={{ position: "absolute", left: `${(i * 37) % 100}%`, top: `${(i * 53) % 100}%`, width: 2 + (i % 3), height: 2 + (i % 3), background: ["#c4a35a", "#a87a7a", "#6a7a8a", "#6b8f6b"][i % 4], borderRadius: "50%", opacity: 0.3 + (i % 5) * 0.1, animation: `float ${3 + (i % 4)}s ease-in-out infinite alternate`, animationDelay: `${i * 0.2}s` }} />
           ))}
         </div>
         <style>{`
           @keyframes float { from { transform: translateY(0px); } to { transform: translateY(-20px); } }
-          @keyframes pulse { 0%, 100% { text-shadow: 0 0 20px #FFD700, 0 0 40px #FFD70060; } 50% { text-shadow: 0 0 40px #FFD700, 0 0 80px #FFD700; } }
+          @keyframes pulse { 0%, 100% { text-shadow: 0 0 20px #c4a35a, 0 0 40px #a8906070; } 50% { text-shadow: 0 0 40px #c4a35a, 0 0 80px #c4a35a; } }
           @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
           @keyframes swordSwing { 0% { transform: rotate(-30deg); } 50% { transform: rotate(30deg); } 100% { transform: rotate(-30deg); } }
         `}</style>
-        <div style={{ fontSize: 14, color: "#FFD700", letterSpacing: 8, marginBottom: 8, opacity: 0.7, animation: "slideUp 0.8s ease" }}>⚔ PRESENTS ⚔</div>
-        <h1 style={{ fontSize: 52, color: "#FFF", margin: 0, letterSpacing: 4, animation: "pulse 3s ease-in-out infinite", textShadow: "0 0 20px #FFD700, 0 0 40px #FFD70060, 0 4px 8px rgba(0,0,0,0.5)" }}>BLADE QUEST</h1>
+        <div style={{ fontSize: 14, color: "#c4a35a", letterSpacing: 8, marginBottom: 8, opacity: 0.7, animation: "slideUp 0.8s ease" }}>⚔ PRESENTS ⚔</div>
+        <h1 style={{ fontSize: 52, color: "#FFF", margin: 0, letterSpacing: 4, animation: "pulse 3s ease-in-out infinite", textShadow: "0 0 20px #c4a35a, 0 0 40px #a8906070, 0 4px 8px rgba(0,0,0,0.5)" }}>BLADE QUEST</h1>
         <div style={{ fontSize: 16, color: "#AAA", marginTop: 8, letterSpacing: 3, animation: "slideUp 1s ease" }}>─── CHRONICLES OF THE FALLEN REALMS ───</div>
-        <div style={{ fontSize: 48, marginTop: 24, animation: "swordSwing 2s ease-in-out infinite", filter: "drop-shadow(0 0 8px #FFD700)" }}>⚔️</div>
-        <button onClick={() => setScreen("select")} style={{ marginTop: 32, padding: "14px 48px", fontSize: 20, background: "linear-gradient(180deg, #FFD700, #FF8C00)", border: "2px solid #FFD700", borderRadius: 4, color: "#1a0a00", fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 3, animation: "slideUp 1.2s ease", transition: "all 0.2s", boxShadow: "0 0 20px #FFD70040, 0 4px 12px rgba(0,0,0,0.4)" }} onMouseEnter={(e) => { e.target.style.transform = "scale(1.05)"; e.target.style.boxShadow = "0 0 30px #FFD70080"; }} onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; e.target.style.boxShadow = "0 0 20px #FFD70040, 0 4px 12px rgba(0,0,0,0.4)"; }}>BEGIN QUEST</button>
+        <div style={{ fontSize: 14, color: "#c4a35a", marginTop: 6, letterSpacing: 4, opacity: 0.9, animation: "slideUp 1.1s ease" }}>Ten realms. One blade.</div>
+        <div style={{ fontSize: 48, marginTop: 24, animation: "swordSwing 2s ease-in-out infinite", filter: "drop-shadow(0 0 8px #c4a35a)" }}>⚔️</div>
+        <button onClick={() => setScreen("select")} style={{ marginTop: 32, padding: "14px 48px", fontSize: 20, background: "linear-gradient(180deg, #b89550, #9a6a38)", border: "2px solid #c4a35a", borderRadius: 4, color: "#1a0a00", fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 3, animation: "slideUp 1.2s ease", transition: "all 0.2s", boxShadow: "0 0 20px #a8906060, 0 4px 12px rgba(0,0,0,0.4)" }} onMouseEnter={(e) => { e.target.style.transform = "scale(1.05)"; e.target.style.boxShadow = "0 0 30px #a8906080"; }} onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; e.target.style.boxShadow = "0 0 20px #a8906060, 0 4px 12px rgba(0,0,0,0.4)"; }}>BEGIN QUEST</button>
         <div style={{ position: "absolute", bottom: 16, color: "#666", fontSize: 12, letterSpacing: 2 }}>10 REALMS • 6 HEROES • ENDLESS GLORY</div>
-        <button onClick={() => setMusicOn(!musicOn)} style={{ position: "absolute", top: 12, right: 12, background: "none", border: "1px solid #FFD70040", borderRadius: 4, color: musicOn ? "#FFD700" : "#666", fontSize: 20, cursor: "pointer", padding: "4px 8px" }}>{musicOn ? "🔊" : "🔇"}</button>
+        <button onClick={() => setMusicOn(!musicOn)} style={{ position: "absolute", top: 12, right: 12, background: "none", border: "1px solid #a8906060", borderRadius: 4, color: musicOn ? "#c4a35a" : "#666", fontSize: 20, cursor: "pointer", padding: "4px 8px" }}>{musicOn ? "🔊" : "🔇"}</button>
       </div>
     );
   }
 
   if (screen === "select") {
     return (
-      <div style={{ width: CANVAS_W, height: CANVAS_H, margin: "0 auto", background: titleGradient, display: "flex", flexDirection: "column", alignItems: "center", fontFamily: "'Courier New', monospace", position: "relative", overflow: "auto", borderRadius: 8, border: "2px solid #FFD70040" }}>
+      <div style={{ width: CANVAS_W, height: CANVAS_H, margin: "0 auto", background: titleGradient, display: "flex", flexDirection: "column", alignItems: "center", fontFamily: "'Courier New', monospace", position: "relative", overflow: "auto", borderRadius: 8, border: "2px solid #8a7a5a60" }}>
         <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }`}</style>
-        <h2 style={{ color: "#FFD700", fontSize: 24, marginTop: 20, letterSpacing: 4, textShadow: "0 0 10px #FFD70060" }}>CHOOSE YOUR HERO</h2>
+        <h2 style={{ color: "#c4a35a", fontSize: 24, marginTop: 20, letterSpacing: 4, textShadow: "0 0 10px #a8906070" }}>CHOOSE YOUR HERO</h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, padding: "16px 32px", maxWidth: 720 }}>
           {CHARACTERS.map((c, i) => (
             <div key={c.id} onClick={() => setSelectedChar(c.id)} onMouseEnter={() => setHoveredChar(i)} onMouseLeave={() => setHoveredChar(null)} style={{ background: selectedChar === c.id ? `linear-gradient(135deg, ${c.color}40, ${c.accent}30)` : "#ffffff08", border: `2px solid ${selectedChar === c.id ? c.accent : hoveredChar === i ? c.color + "80" : "#ffffff15"}`, borderRadius: 8, padding: "16px 14px", cursor: "pointer", transition: "all 0.25s", transform: selectedChar === c.id ? "scale(1.03)" : hoveredChar === i ? "scale(1.01)" : "scale(1)", animation: `fadeIn ${0.3 + i * 0.1}s ease`, boxShadow: selectedChar === c.id ? `0 0 20px ${c.accent}30` : "none" }}>
@@ -2024,7 +2355,7 @@ export default function Game() {
             </div>
           ))}
         </div>
-        <h2 style={{ color: "#FFD700", fontSize: 20, marginTop: 8, letterSpacing: 3, textShadow: "0 0 8px #FFD70060" }}>CHOOSE REALM</h2>
+        <h2 style={{ color: "#c4a35a", fontSize: 20, marginTop: 8, letterSpacing: 3, textShadow: "0 0 8px #a8906070" }}>CHOOSE REALM</h2>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", padding: "0 24px 16px", maxWidth: 720 }}>
           {LEVELS.map((lvl, i) => (
             <button key={lvl.id} onClick={() => setCurrentLevel(i)} style={{ padding: "8px 14px", fontSize: 12, background: currentLevel === i ? `linear-gradient(135deg, ${lvl.accent}50, ${lvl.platform}60)` : "#ffffff0c", border: `2px solid ${currentLevel === i ? lvl.accent : "#ffffff20"}`, borderRadius: 6, color: currentLevel === i ? "#FFF" : "#AAA", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 1, transition: "all 0.2s", boxShadow: currentLevel === i ? `0 0 12px ${lvl.accent}40` : "none" }}>
@@ -2033,10 +2364,10 @@ export default function Game() {
           ))}
         </div>
         <div style={{ display: "flex", gap: 16, marginTop: 4, marginBottom: 20 }}>
-          <button onClick={() => setScreen("title")} style={{ padding: "10px 28px", fontSize: 14, background: "transparent", border: "1px solid #FFD70060", borderRadius: 4, color: "#FFD700", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 2 }}>← BACK</button>
-          <button onClick={() => startGame(currentLevel)} style={{ padding: "10px 36px", fontSize: 16, background: "linear-gradient(180deg, #FFD700, #FF8C00)", border: "2px solid #FFD700", borderRadius: 4, color: "#1a0a00", fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 2, boxShadow: "0 0 15px #FFD70040" }}>ENTER REALM →</button>
+          <button onClick={() => setScreen("title")} style={{ padding: "10px 28px", fontSize: 14, background: "transparent", border: "1px solid #a8906070", borderRadius: 4, color: "#c4a35a", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 2 }}>← BACK</button>
+          <button onClick={() => startGame(currentLevel)} style={{ padding: "10px 36px", fontSize: 16, background: "linear-gradient(180deg, #b89550, #9a6a38)", border: "2px solid #c4a35a", borderRadius: 4, color: "#1a0a00", fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 2, boxShadow: "0 0 15px #a8906060" }}>ENTER REALM →</button>
         </div>
-        <button onClick={() => setMusicOn(!musicOn)} style={{ position: "absolute", top: 12, right: 12, background: "none", border: "1px solid #FFD70040", borderRadius: 4, color: musicOn ? "#FFD700" : "#666", fontSize: 20, cursor: "pointer", padding: "4px 8px" }}>{musicOn ? "🔊" : "🔇"}</button>
+        <button onClick={() => setMusicOn(!musicOn)} style={{ position: "absolute", top: 12, right: 12, background: "none", border: "1px solid #a8906060", borderRadius: 4, color: musicOn ? "#c4a35a" : "#666", fontSize: 20, cursor: "pointer", padding: "4px 8px" }}>{musicOn ? "🔊" : "🔇"}</button>
       </div>
     );
   }
@@ -2044,8 +2375,8 @@ export default function Game() {
   if (screen === "game") {
     return (
       <div style={{ width: CANVAS_W, height: CANVAS_H, margin: "0 auto", position: "relative" }}>
-        <canvas ref={canvasRef} width={CANVAS_W} height={CANVAS_H} style={{ display: "block", borderRadius: 8, border: "2px solid #FFD70040" }} />
-        <button onClick={() => setMusicOn(!musicOn)} style={{ position: "absolute", top: 12, right: 12, background: "#00000060", border: "1px solid #FFD70040", borderRadius: 4, color: musicOn ? "#FFD700" : "#666", fontSize: 18, cursor: "pointer", padding: "2px 6px", zIndex: 10 }}>{musicOn ? "🔊" : "🔇"}</button>
+        <canvas ref={canvasRef} width={CANVAS_W} height={CANVAS_H} style={{ display: "block", borderRadius: 8, border: "2px solid #8a7a5a60" }} />
+        <button onClick={() => setMusicOn(!musicOn)} style={{ position: "absolute", top: 12, right: 12, background: "#00000060", border: "1px solid #a8906060", borderRadius: 4, color: musicOn ? "#c4a35a" : "#666", fontSize: 18, cursor: "pointer", padding: "2px 6px", zIndex: 10 }}>{musicOn ? "🔊" : "🔇"}</button>
       </div>
     );
   }
@@ -2053,30 +2384,34 @@ export default function Game() {
   if (screen === "levelComplete") {
     const nextLvl = LEVELS[currentLevel];
     return (
-      <div style={{ width: CANVAS_W, height: CANVAS_H, margin: "0 auto", background: titleGradient, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Courier New', monospace", borderRadius: 8, border: "2px solid #FFD70040" }}>
-        <style>{`@keyframes glow { 0%,100% { text-shadow: 0 0 20px #4CAF50; } 50% { text-shadow: 0 0 40px #4CAF50, 0 0 60px #4CAF5060; } }`}</style>
+      <div style={{ width: CANVAS_W, height: CANVAS_H, margin: "0 auto", background: titleGradient, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Courier New', monospace", borderRadius: 8, border: "2px solid #8a7a5a60" }}>
+        <style>{`@keyframes glow { 0%,100% { text-shadow: 0 0 20px #5a7a5a; } 50% { text-shadow: 0 0 40px #5a7a5a, 0 0 60px #5a7a5a60; } }`}</style>
         <div style={{ fontSize: 48, marginBottom: 16 }}>⚔️</div>
-        <h2 style={{ color: "#4CAF50", fontSize: 32, margin: 0, letterSpacing: 4, animation: "glow 2s infinite" }}>REALM CONQUERED!</h2>
-        <div style={{ color: "#FFD700", fontSize: 20, marginTop: 16 }}>Score: {score}</div>
+        <h2 style={{ color: "#5a7a5a", fontSize: 32, margin: 0, letterSpacing: 4, animation: "glow 2s infinite" }}>REALM CONQUERED!</h2>
+        <div style={{ color: "#c4a35a", fontSize: 20, marginTop: 16 }}>Score: {score}</div>
         <div style={{ color: "#AAA", marginTop: 12, fontSize: 14 }}>Lives remaining: {"♥ ".repeat(lives)}</div>
         <div style={{ color: nextLvl?.accent || "#FFF", marginTop: 20, fontSize: 18, letterSpacing: 2 }}>Next: {nextLvl?.name || "???"}</div>
-        <button onClick={() => startGame(currentLevel)} style={{ marginTop: 28, padding: "12px 40px", fontSize: 18, background: "linear-gradient(180deg, #FFD700, #FF8C00)", border: "2px solid #FFD700", borderRadius: 4, color: "#1a0a00", fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 3, boxShadow: "0 0 20px #FFD70040" }}>CONTINUE →</button>
+        <button onClick={() => startGame(currentLevel)} style={{ marginTop: 28, padding: "12px 40px", fontSize: 18, background: "linear-gradient(180deg, #b89550, #9a6a38)", border: "2px solid #c4a35a", borderRadius: 4, color: "#1a0a00", fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 3, boxShadow: "0 0 20px #a8906060" }}>CONTINUE →</button>
       </div>
     );
   }
 
   if (screen === "death") {
     const levelName = LEVELS[currentLevel]?.name ?? "Unknown";
+    const hero = CHARACTERS[selectedChar];
+    const deathLine = DEATH_SCREEN_LINES[deathFlavorIndex % DEATH_SCREEN_LINES.length] ?? DEATH_SCREEN_LINES[0];
+    const heroDeathLine = hero?.death ?? "...";
     return (
-      <div style={{ width: CANVAS_W, height: CANVAS_H, margin: "0 auto", background: "linear-gradient(135deg, #1a0000, #2a0a0a, #1a0000)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Courier New', monospace", borderRadius: 8, border: "2px solid #F4433640" }}>
+      <div style={{ width: CANVAS_W, height: CANVAS_H, margin: "0 auto", background: "linear-gradient(135deg, #1a0000, #2a0a0a, #1a0000)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Courier New', monospace", borderRadius: 8, border: "2px solid #8a484860" }}>
         <style>{`@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }`}</style>
         <div style={{ fontSize: 56, marginBottom: 8 }}>💀</div>
-        <h1 style={{ color: "#F44336", fontSize: 42, margin: 0, letterSpacing: 6, animation: "shake 0.5s ease", textShadow: "0 0 20px #F4433660" }}>YOU DIED</h1>
-        <p style={{ color: "#BBB", fontSize: 16, marginTop: 16, letterSpacing: 2 }}>Your quest ends here...</p>
-        <div style={{ color: "#FFD700", fontSize: 18, marginTop: 20 }}>Score: {score}</div>
+        <h1 style={{ color: "#9a5050", fontSize: 42, margin: 0, letterSpacing: 6, animation: "shake 0.5s ease", textShadow: "0 0 20px #8a484860" }}>YOU DIED</h1>
+        <p style={{ color: "#BBB", fontSize: 16, marginTop: 16, letterSpacing: 2 }}>{deathLine}</p>
+        <p style={{ color: hero?.accent ?? "#c4a35a", fontSize: 14, marginTop: 8, fontStyle: "italic" }}>"{heroDeathLine}" — {hero?.name}</p>
+        <div style={{ color: "#c4a35a", fontSize: 18, marginTop: 20 }}>Score: {score}</div>
         <div style={{ color: "#999", fontSize: 14, marginTop: 4 }}>Level {currentLevel + 1} — {levelName}</div>
         <div style={{ display: "flex", gap: 20, marginTop: 40 }}>
-          <button onClick={() => { setLives(3); startGame(currentLevel); }} style={{ padding: "14px 36px", fontSize: 18, background: "linear-gradient(180deg, #F44336, #D32F2F)", border: "2px solid #F44336", borderRadius: 4, color: "#FFF", fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 3, boxShadow: "0 0 20px #F4433640" }}>RETRY LEVEL</button>
+          <button onClick={() => { setLives(3); startGame(currentLevel); }} style={{ padding: "14px 36px", fontSize: 18, background: "linear-gradient(180deg, #8a5050, #6a3838)", border: "2px solid #8a4848", borderRadius: 4, color: "#e8e0d8", fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 3, boxShadow: "0 0 20px #8a484840" }}>RETRY LEVEL</button>
           <button onClick={() => { setScore(0); setLives(3); setCurrentLevel(0); setScreen("title"); }} style={{ padding: "14px 36px", fontSize: 18, background: "transparent", border: "2px solid #666", borderRadius: 4, color: "#AAA", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 3 }}>QUIT</button>
         </div>
       </div>
@@ -2085,20 +2420,20 @@ export default function Game() {
 
   if (screen === "victory") {
     return (
-      <div style={{ width: CANVAS_W, height: CANVAS_H, margin: "0 auto", background: "linear-gradient(135deg, #0a1a0a, #1a3a1a, #0a2a0a)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Courier New', monospace", borderRadius: 8, border: "2px solid #FFD70060", position: "relative", overflow: "hidden" }}>
+      <div style={{ width: CANVAS_W, height: CANVAS_H, margin: "0 auto", background: "linear-gradient(135deg, #1a2418, #2a3828, #1a2e1a)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Courier New', monospace", borderRadius: 8, border: "2px solid #a8906070", position: "relative", overflow: "hidden" }}>
         <style>{`
-          @keyframes victoryGlow { 0%,100% { text-shadow: 0 0 30px #FFD700, 0 0 60px #FFD70060; } 50% { text-shadow: 0 0 60px #FFD700, 0 0 120px #FFD700; } }
+          @keyframes victoryGlow { 0%,100% { text-shadow: 0 0 30px #c4a35a, 0 0 60px #a8906070; } 50% { text-shadow: 0 0 60px #c4a35a, 0 0 120px #c4a35a; } }
           @keyframes confetti { 0% { transform: translateY(-20px) rotate(0deg); opacity: 1; } 100% { transform: translateY(600px) rotate(720deg); opacity: 0; } }
         `}</style>
         {Array.from({ length: 20 }, (_, i) => (
-          <div key={i} style={{ position: "absolute", left: `${(i * 47) % 100}%`, top: -20, width: 8, height: 8, borderRadius: i % 2 ? "50%" : 0, background: ["#FFD700", "#FF6B9D", "#4A90D9", "#7CFC00", "#E040FB"][i % 5], animation: `confetti ${2 + (i % 3)}s linear infinite`, animationDelay: `${i * 0.15}s` }} />
+          <div key={i} style={{ position: "absolute", left: `${(i * 47) % 100}%`, top: -20, width: 8, height: 8, borderRadius: i % 2 ? "50%" : 0, background: ["#c4a35a", "#a87a7a", "#6a7a8a", "#6b8f6b", "#8a7a9a"][i % 5], animation: `confetti ${2 + (i % 3)}s linear infinite`, animationDelay: `${i * 0.15}s` }} />
         ))}
         <div style={{ fontSize: 64, marginBottom: 12 }}>👑</div>
-        <h2 style={{ color: "#FFD700", fontSize: 40, margin: 0, letterSpacing: 6, animation: "victoryGlow 2s infinite" }}>VICTORY!</h2>
+        <h2 style={{ color: "#c4a35a", fontSize: 40, margin: 0, letterSpacing: 6, animation: "victoryGlow 2s infinite" }}>VICTORY!</h2>
         <div style={{ color: "#FFF", fontSize: 16, marginTop: 12, letterSpacing: 2 }}>All 10 realms have been conquered!</div>
-        <div style={{ color: "#FFD700", fontSize: 24, marginTop: 16 }}>Final Score: {score}</div>
+        <div style={{ color: "#c4a35a", fontSize: 24, marginTop: 16 }}>Final Score: {score}</div>
         <div style={{ color: "#AAA", marginTop: 8, fontSize: 14 }}>Hero: {CHARACTERS[selectedChar].name} {CHARACTERS[selectedChar].icon}</div>
-        <button onClick={() => { setScore(0); setLives(3); setCurrentLevel(0); setScreen("title"); }} style={{ marginTop: 28, padding: "12px 40px", fontSize: 18, background: "linear-gradient(180deg, #FFD700, #FF8C00)", border: "2px solid #FFD700", borderRadius: 4, color: "#1a0a00", fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 3, boxShadow: "0 0 20px #FFD70040" }}>PLAY AGAIN</button>
+        <button onClick={() => { setScore(0); setLives(3); setCurrentLevel(0); setScreen("title"); }} style={{ marginTop: 28, padding: "12px 40px", fontSize: 18, background: "linear-gradient(180deg, #b89550, #9a6a38)", border: "2px solid #c4a35a", borderRadius: 4, color: "#1a0a00", fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 3, boxShadow: "0 0 20px #a8906060" }}>PLAY AGAIN</button>
       </div>
     );
   }

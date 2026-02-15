@@ -510,6 +510,30 @@ class MusicEngine {
       setTimeout(() => { s.triggerAttackRelease("G6", "16n"); setTimeout(() => s.dispose(), 300); }, 50);
     } catch (e) {}
   }
+
+  playConfirm() {
+    try {
+      const s = new Tone.Synth({ volume: -14, oscillator: { type: "sine" }, envelope: { attack: 0.02, decay: 0.1, sustain: 0, release: 0.15 } }).toDestination();
+      s.triggerAttackRelease("C5", "32n");
+      setTimeout(() => s.dispose(), 200);
+    } catch (e) {}
+  }
+
+  playBack() {
+    try {
+      const s = new Tone.Synth({ volume: -16, oscillator: { type: "triangle" }, envelope: { attack: 0.02, decay: 0.08, sustain: 0, release: 0.1 } }).toDestination();
+      s.triggerAttackRelease("G4", "32n");
+      setTimeout(() => s.dispose(), 150);
+    } catch (e) {}
+  }
+
+  playCrit() {
+    try {
+      const s = new Tone.Synth({ volume: -10, oscillator: { type: "sine" }, envelope: { attack: 0.01, decay: 0.15, sustain: 0, release: 0.2 } }).toDestination();
+      s.triggerAttackRelease("E6", "16n");
+      setTimeout(() => { s.triggerAttackRelease("G6", "16n"); setTimeout(() => s.dispose(), 250); }, 40);
+    } catch (e) {}
+  }
 }
 
 // ============================================================
@@ -576,9 +600,10 @@ function updateShake(g) {
 // ============================================================
 // DRAWING HELPERS
 // ============================================================
-function drawCharacter(ctx, x, y, char, facing, frame, attacking, hurt, landSquashFrames = 0, jumpStretchFrames = 0, dodgeRollFrames = 0) {
+function drawCharacter(ctx, x, y, char, facing, frame, attacking, hurt, landSquashFrames = 0, jumpStretchFrames = 0, dodgeRollFrames = 0, idleFrames = 0) {
   const c = CHARACTERS[char];
-  const bob = Math.sin(frame * 0.15) * 2;
+  let bob = Math.sin(frame * 0.15) * 2;
+  if (idleFrames > 60 && landSquashFrames <= 0 && dodgeRollFrames <= 0 && attacking <= 0 && hurt <= 0) bob += Math.sin(frame * 0.06) * 3;
   const atkAnim = attacking > 0 ? Math.sin(attacking * 0.5) * 20 : 0;
 
   ctx.save();
@@ -597,12 +622,13 @@ function drawCharacter(ctx, x, y, char, facing, frame, attacking, hurt, landSqua
   ctx.shadowBlur = 0;
   ctx.globalAlpha = hurt > 0 && Math.floor(hurt) % 4 < 2 ? 0.5 : 1;
 
-  // Dodge roll: squash into a roll
+  // Dodge roll: curled shape + spin so it reads as a roll (not flat)
   if (dodgeRollFrames > 0) {
-    ctx.translate(0, 18);
-    ctx.scale(1.4, 0.45);
-    ctx.translate(0, -18);
-    ctx.globalAlpha = 0.85;
+    const rollProgress = (DODGE_ROLL_FRAMES - dodgeRollFrames) / DODGE_ROLL_FRAMES;
+    const spin = rollProgress * Math.PI * 2 * 2; // two full rotations over the roll
+    ctx.rotate(spin * (facing > 0 ? 1 : -1));
+    ctx.scale(1.15, 0.7); // oval but not pancake-flat
+    ctx.globalAlpha = 0.92;
   }
 
   // Squash on land (scale from feet)
@@ -800,6 +826,11 @@ function drawBoss(ctx, boss, camX, frame, levelId) {
     ctx.textAlign = "left";
   }
 
+  if (boss.hit > 0) {
+    ctx.fillStyle = "#FFF";
+    ctx.globalAlpha = 0.5;
+    ctx.fillRect(-boss.w / 2 - 5, -boss.h / 2 - 15, boss.w + 10, boss.h + 30);
+  }
   ctx.globalAlpha = 1;
   ctx.restore();
 
@@ -1206,6 +1237,7 @@ export default function Game() {
     timeScaleTimer: 0,
     bossPhaseFlash: 0,
     slashTrail: [],
+    dodgeDashTrail: [],
     runDustTimer: 0,
     victoryFlashFrames: 0,
     beatBossTransitionFrames: 0,
@@ -1222,6 +1254,7 @@ export default function Game() {
     perfectDodgeFrames: 0,
     perfectDodgeThisDodge: false,
     lastEnemyKillFrames: 0,
+    idleFrames: 0,
     lastSurface: "ground",
   });
 
@@ -1325,6 +1358,7 @@ export default function Game() {
     g.timeScaleTimer = 0;
     g.bossPhaseFlash = 0;
     g.slashTrail = [];
+    g.dodgeDashTrail = [];
     g.runDustTimer = 0;
     g.victoryFlashFrames = 0;
     g.beatBossTransitionFrames = 0;
@@ -1333,6 +1367,7 @@ export default function Game() {
     g.perfectDodgeFrames = 0;
     g.perfectDodgeThisDodge = false;
     g.lastEnemyKillFrames = 0;
+    g.idleFrames = 0;
     g.levelIntroLineTimer = 90;
     const introOpts = LEVEL_INTRO_LINES[levelId];
     g.levelIntroLine = Array.isArray(introOpts) ? introOpts[Math.floor(Math.random() * introOpts.length)] : (introOpts ?? "The path awaits.");
@@ -1476,7 +1511,10 @@ export default function Game() {
       if (p.dashFrames > 0 || p.dodgeRollFrames > 0) {
         p.vx = 0;
         p.vy = 0;
+        g.idleFrames = 0;
       } else {
+        if (p.grounded && Math.abs(p.vx) < 0.2 && p.attacking <= 0 && p.hurt <= 0) g.idleFrames++;
+        else g.idleFrames = 0;
         p.vy += GRAVITY * dt;
         p.vx *= FRICTION;
         if (!p.grounded && p.vy < 0 && !p.jumpHeld) p.vy *= JUMP_CUT_MULT;
@@ -1560,6 +1598,16 @@ export default function Game() {
       if (g.slashTrail && g.slashTrail.length > 0) {
         g.slashTrail.forEach((t) => { t.alpha -= SLASH_TRAIL_DECAY; });
         g.slashTrail = g.slashTrail.filter((t) => t.alpha > 0.05);
+      }
+      if (p.dodgeRollFrames > 0 || p.dashFrames > 0) {
+        g.dodgeDashTrail = g.dodgeDashTrail || [];
+        g.dodgeDashTrail.push({ x: p.x, y: p.y, facing: p.facing, charId: p.charId, alpha: 1 });
+        if (g.dodgeDashTrail.length > 6) g.dodgeDashTrail.shift();
+      } else {
+        if (g.dodgeDashTrail && g.dodgeDashTrail.length > 0) {
+          g.dodgeDashTrail.forEach((t) => { t.alpha -= 0.2; });
+          g.dodgeDashTrail = g.dodgeDashTrail.filter((t) => t.alpha > 0.05);
+        }
       }
       if (p.attacking === 0) p.chargedAttack = false;
 
@@ -1699,6 +1747,7 @@ export default function Game() {
           const particleCount = isCrit || p.chargedAttack ? 18 : 10;
           for (let i = 0; i < particleCount; i++) g.particles.push(new Particle(enemy.x + 16, enemy.y + 18, isCrit ? "#c4a35a" : (i % 2 === 0 ? "#FFF" : CHARACTERS[p.charId].accent), (Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8, 20, 4));
           addShake(g, isCrit || p.chargedAttack ? 6 : 4);
+          if (musicOn && isCrit) g.music.playCrit();
           g.hitStopFrames = HITSTOP_ENEMY + (isCrit ? CRITICAL_HITSTOP_EXTRA : 0) + (p.chargedAttack ? 2 : 0);
           if (enemy.health <= 0) {
             enemy.alive = false; setScore((s) => s + 50);
@@ -1772,6 +1821,7 @@ export default function Game() {
             g.bossPhaseLineTimer = 90;
           }
           addShake(g, isCrit || p.chargedAttack ? 10 : 6);
+          if (musicOn && isCrit) g.music.playCrit();
           g.hitStopFrames = HITSTOP_BOSS + (isCrit ? CRITICAL_HITSTOP_EXTRA : 0) + (p.chargedAttack ? 2 : 0);
           const bossParticleCount = isCrit || p.chargedAttack ? 25 : 15;
           for (let i = 0; i < bossParticleCount; i++) g.particles.push(new Particle(boss.x + boss.w / 2, boss.y + boss.h / 2, isCrit ? "#c4a35a" : (i % 2 === 0 ? "#FFF" : levelData.accent), (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10, 25, 5));
@@ -1906,7 +1956,23 @@ export default function Game() {
           ctx.restore();
         });
       }
-      drawCharacter(ctx, p.x - g.camX, p.y, p.charId, p.facing, p.frame, p.attacking, p.hurt, p.landSquashFrames || 0, p.jumpStretchFrames || 0, p.dodgeRollFrames || 0);
+      // Dodge/dash whoosh: fading afterimages behind player
+      if (g.dodgeDashTrail && g.dodgeDashTrail.length > 0) {
+        g.dodgeDashTrail.forEach((t) => {
+          const tx = t.x - g.camX + 16;
+          const ty = t.y + 18;
+          if (tx < -30 || tx > CANVAS_W + 30) return;
+          const c = CHARACTERS[t.charId];
+          ctx.save();
+          ctx.globalAlpha = t.alpha * 0.7;
+          ctx.fillStyle = (c?.accent ?? "#c4a35a") + "cc";
+          ctx.beginPath();
+          ctx.ellipse(tx, ty, 14, 18, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        });
+      }
+      drawCharacter(ctx, p.x - g.camX, p.y, p.charId, p.facing, p.frame, p.attacking, p.hurt, p.landSquashFrames || 0, p.jumpStretchFrames || 0, p.dodgeRollFrames || 0, g.idleFrames || 0);
 
       // Charge attack wind-up (glow while holding Z)
       if (p.attackCharge > 0 && p.attacking <= 0 && p.attackType < 2) {
@@ -2319,7 +2385,7 @@ export default function Game() {
         <div style={{ fontSize: 16, color: "#AAA", marginTop: 8, letterSpacing: 3, animation: "slideUp 1s ease" }}>─── CHRONICLES OF THE FALLEN REALMS ───</div>
         <div style={{ fontSize: 14, color: "#c4a35a", marginTop: 6, letterSpacing: 4, opacity: 0.9, animation: "slideUp 1.1s ease" }}>Ten realms. One blade.</div>
         <div style={{ fontSize: 48, marginTop: 24, animation: "swordSwing 2s ease-in-out infinite", filter: "drop-shadow(0 0 8px #c4a35a)" }}>⚔️</div>
-        <button onClick={() => setScreen("select")} style={{ marginTop: 32, padding: "14px 48px", fontSize: 20, background: "linear-gradient(180deg, #b89550, #9a6a38)", border: "2px solid #c4a35a", borderRadius: 4, color: "#1a0a00", fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 3, animation: "slideUp 1.2s ease", transition: "all 0.2s", boxShadow: "0 0 20px #a8906060, 0 4px 12px rgba(0,0,0,0.4)" }} onMouseEnter={(e) => { e.target.style.transform = "scale(1.05)"; e.target.style.boxShadow = "0 0 30px #a8906080"; }} onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; e.target.style.boxShadow = "0 0 20px #a8906060, 0 4px 12px rgba(0,0,0,0.4)"; }}>BEGIN QUEST</button>
+        <button onClick={() => { gameRef.current.music.playConfirm(); setScreen("select"); }} style={{ marginTop: 32, padding: "14px 48px", fontSize: 20, background: "linear-gradient(180deg, #b89550, #9a6a38)", border: "2px solid #c4a35a", borderRadius: 4, color: "#1a0a00", fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 3, animation: "slideUp 1.2s ease", transition: "all 0.2s", boxShadow: "0 0 20px #a8906060, 0 4px 12px rgba(0,0,0,0.4)" }} onMouseEnter={(e) => { e.target.style.transform = "scale(1.05)"; e.target.style.boxShadow = "0 0 30px #a8906080"; }} onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; e.target.style.boxShadow = "0 0 20px #a8906060, 0 4px 12px rgba(0,0,0,0.4)"; }}>BEGIN QUEST</button>
         <div style={{ position: "absolute", bottom: 16, color: "#666", fontSize: 12, letterSpacing: 2 }}>10 REALMS • 6 HEROES • ENDLESS GLORY</div>
         <button onClick={() => setMusicOn(!musicOn)} style={{ position: "absolute", top: 12, right: 12, background: "none", border: "1px solid #a8906060", borderRadius: 4, color: musicOn ? "#c4a35a" : "#666", fontSize: 20, cursor: "pointer", padding: "4px 8px" }}>{musicOn ? "🔊" : "🔇"}</button>
       </div>
@@ -2333,7 +2399,7 @@ export default function Game() {
         <h2 style={{ color: "#c4a35a", fontSize: 24, marginTop: 20, letterSpacing: 4, textShadow: "0 0 10px #a8906070" }}>CHOOSE YOUR HERO</h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, padding: "16px 32px", maxWidth: 720 }}>
           {CHARACTERS.map((c, i) => (
-            <div key={c.id} onClick={() => setSelectedChar(c.id)} onMouseEnter={() => setHoveredChar(i)} onMouseLeave={() => setHoveredChar(null)} style={{ background: selectedChar === c.id ? `linear-gradient(135deg, ${c.color}40, ${c.accent}30)` : "#ffffff08", border: `2px solid ${selectedChar === c.id ? c.accent : hoveredChar === i ? c.color + "80" : "#ffffff15"}`, borderRadius: 8, padding: "16px 14px", cursor: "pointer", transition: "all 0.25s", transform: selectedChar === c.id ? "scale(1.03)" : hoveredChar === i ? "scale(1.01)" : "scale(1)", animation: `fadeIn ${0.3 + i * 0.1}s ease`, boxShadow: selectedChar === c.id ? `0 0 20px ${c.accent}30` : "none" }}>
+            <div key={c.id} onClick={() => { gameRef.current.music.playConfirm(); setSelectedChar(c.id); }} onMouseEnter={() => setHoveredChar(i)} onMouseLeave={() => setHoveredChar(null)} style={{ background: selectedChar === c.id ? `linear-gradient(135deg, ${c.color}40, ${c.accent}30)` : "#ffffff08", border: `2px solid ${selectedChar === c.id ? c.accent : hoveredChar === i ? c.color + "80" : "#ffffff15"}`, borderRadius: 8, padding: "16px 14px", cursor: "pointer", transition: "all 0.25s", transform: selectedChar === c.id ? "scale(1.03)" : hoveredChar === i ? "scale(1.01)" : "scale(1)", animation: `fadeIn ${0.3 + i * 0.1}s ease`, boxShadow: selectedChar === c.id ? `0 0 20px ${c.accent}30` : "none" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
                 <span style={{ fontSize: 28 }}>{c.icon}</span>
                 <div style={{ flex: 1 }}>
@@ -2365,8 +2431,8 @@ export default function Game() {
           ))}
         </div>
         <div style={{ display: "flex", gap: 16, marginTop: 4, marginBottom: 20 }}>
-          <button onClick={() => setScreen("title")} style={{ padding: "10px 28px", fontSize: 14, background: "transparent", border: "1px solid #a8906070", borderRadius: 4, color: "#c4a35a", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 2 }}>← BACK</button>
-          <button onClick={() => startGame(currentLevel)} style={{ padding: "10px 36px", fontSize: 16, background: "linear-gradient(180deg, #b89550, #9a6a38)", border: "2px solid #c4a35a", borderRadius: 4, color: "#1a0a00", fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 2, boxShadow: "0 0 15px #a8906060" }}>ENTER REALM →</button>
+          <button onClick={() => { gameRef.current.music.playBack(); setScreen("title"); }} style={{ padding: "10px 28px", fontSize: 14, background: "transparent", border: "1px solid #a8906070", borderRadius: 4, color: "#c4a35a", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 2 }}>← BACK</button>
+          <button onClick={() => { gameRef.current.music.playConfirm(); startGame(currentLevel); }} style={{ padding: "10px 36px", fontSize: 16, background: "linear-gradient(180deg, #b89550, #9a6a38)", border: "2px solid #c4a35a", borderRadius: 4, color: "#1a0a00", fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 2, boxShadow: "0 0 15px #a8906060" }}>ENTER REALM →</button>
         </div>
         <button onClick={() => setMusicOn(!musicOn)} style={{ position: "absolute", top: 12, right: 12, background: "none", border: "1px solid #a8906060", borderRadius: 4, color: musicOn ? "#c4a35a" : "#666", fontSize: 20, cursor: "pointer", padding: "4px 8px" }}>{musicOn ? "🔊" : "🔇"}</button>
       </div>
@@ -2392,7 +2458,7 @@ export default function Game() {
         <div style={{ color: "#c4a35a", fontSize: 20, marginTop: 16 }}>Score: {score}</div>
         <div style={{ color: "#AAA", marginTop: 12, fontSize: 14 }}>Lives remaining: {"♥ ".repeat(lives)}</div>
         <div style={{ color: nextLvl?.accent || "#FFF", marginTop: 20, fontSize: 18, letterSpacing: 2 }}>Next: {nextLvl?.name || "???"}</div>
-        <button onClick={() => startGame(currentLevel)} style={{ marginTop: 28, padding: "12px 40px", fontSize: 18, background: "linear-gradient(180deg, #b89550, #9a6a38)", border: "2px solid #c4a35a", borderRadius: 4, color: "#1a0a00", fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 3, boxShadow: "0 0 20px #a8906060" }}>CONTINUE →</button>
+        <button onClick={() => { gameRef.current.music.playConfirm(); startGame(currentLevel); }} style={{ marginTop: 28, padding: "12px 40px", fontSize: 18, background: "linear-gradient(180deg, #b89550, #9a6a38)", border: "2px solid #c4a35a", borderRadius: 4, color: "#1a0a00", fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 3, boxShadow: "0 0 20px #a8906060" }}>CONTINUE →</button>
       </div>
     );
   }
@@ -2412,29 +2478,33 @@ export default function Game() {
         <div style={{ color: "#c4a35a", fontSize: 18, marginTop: 20 }}>Score: {score}</div>
         <div style={{ color: "#999", fontSize: 14, marginTop: 4 }}>Level {currentLevel + 1} — {levelName}</div>
         <div style={{ display: "flex", gap: 20, marginTop: 40 }}>
-          <button onClick={() => { setLives(3); startGame(currentLevel); }} style={{ padding: "14px 36px", fontSize: 18, background: "linear-gradient(180deg, #8a5050, #6a3838)", border: "2px solid #8a4848", borderRadius: 4, color: "#e8e0d8", fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 3, boxShadow: "0 0 20px #8a484840" }}>RETRY LEVEL</button>
-          <button onClick={() => { setScore(0); setLives(3); setCurrentLevel(0); setScreen("title"); }} style={{ padding: "14px 36px", fontSize: 18, background: "transparent", border: "2px solid #666", borderRadius: 4, color: "#AAA", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 3 }}>QUIT</button>
+          <button onClick={() => { gameRef.current.music.playConfirm(); setLives(3); startGame(currentLevel); }} style={{ padding: "14px 36px", fontSize: 18, background: "linear-gradient(180deg, #8a5050, #6a3838)", border: "2px solid #8a4848", borderRadius: 4, color: "#e8e0d8", fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 3, boxShadow: "0 0 20px #8a484840" }}>RETRY LEVEL</button>
+          <button onClick={() => { gameRef.current.music.playBack(); setScore(0); setLives(3); setCurrentLevel(0); setScreen("title"); }} style={{ padding: "14px 36px", fontSize: 18, background: "transparent", border: "2px solid #666", borderRadius: 4, color: "#AAA", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 3 }}>QUIT</button>
         </div>
       </div>
     );
   }
 
   if (screen === "victory") {
+    const hero = CHARACTERS[selectedChar];
+    const victoryLine = hero?.bossKill ?? hero?.quote ?? "The realm is restored.";
+    const accent = hero?.accent ?? "#c4a35a";
     return (
-      <div style={{ width: CANVAS_W, height: CANVAS_H, margin: "0 auto", background: "linear-gradient(135deg, #1a2418, #2a3828, #1a2e1a)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Courier New', monospace", borderRadius: 8, border: "2px solid #a8906070", position: "relative", overflow: "hidden" }}>
+      <div style={{ width: CANVAS_W, height: CANVAS_H, margin: "0 auto", background: "linear-gradient(135deg, #1a2418, #2a3828, #1a2e1a)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Courier New', monospace", borderRadius: 8, border: `2px solid ${accent}60`, position: "relative", overflow: "hidden" }}>
         <style>{`
-          @keyframes victoryGlow { 0%,100% { text-shadow: 0 0 30px #c4a35a, 0 0 60px #a8906070; } 50% { text-shadow: 0 0 60px #c4a35a, 0 0 120px #c4a35a; } }
+          @keyframes victoryGlow { 0%,100% { text-shadow: 0 0 30px ${accent}, 0 0 60px ${accent}70; } 50% { text-shadow: 0 0 60px ${accent}, 0 0 120px ${accent}; } }
           @keyframes confetti { 0% { transform: translateY(-20px) rotate(0deg); opacity: 1; } 100% { transform: translateY(600px) rotate(720deg); opacity: 0; } }
         `}</style>
         {Array.from({ length: 20 }, (_, i) => (
-          <div key={i} style={{ position: "absolute", left: `${(i * 47) % 100}%`, top: -20, width: 8, height: 8, borderRadius: i % 2 ? "50%" : 0, background: ["#c4a35a", "#a87a7a", "#6a7a8a", "#6b8f6b", "#8a7a9a"][i % 5], animation: `confetti ${2 + (i % 3)}s linear infinite`, animationDelay: `${i * 0.15}s` }} />
+          <div key={i} style={{ position: "absolute", left: `${(i * 47) % 100}%`, top: -20, width: 8, height: 8, borderRadius: i % 2 ? "50%" : 0, background: [accent, "#a87a7a", "#6a7a8a", "#6b8f6b", "#8a7a9a"][i % 5], animation: `confetti ${2 + (i % 3)}s linear infinite`, animationDelay: `${i * 0.15}s` }} />
         ))}
         <div style={{ fontSize: 64, marginBottom: 12 }}>👑</div>
-        <h2 style={{ color: "#c4a35a", fontSize: 40, margin: 0, letterSpacing: 6, animation: "victoryGlow 2s infinite" }}>VICTORY!</h2>
-        <div style={{ color: "#FFF", fontSize: 16, marginTop: 12, letterSpacing: 2 }}>All 10 realms have been conquered!</div>
-        <div style={{ color: "#c4a35a", fontSize: 24, marginTop: 16 }}>Final Score: {score}</div>
-        <div style={{ color: "#AAA", marginTop: 8, fontSize: 14 }}>Hero: {CHARACTERS[selectedChar].name} {CHARACTERS[selectedChar].icon}</div>
-        <button onClick={() => { setScore(0); setLives(3); setCurrentLevel(0); setScreen("title"); }} style={{ marginTop: 28, padding: "12px 40px", fontSize: 18, background: "linear-gradient(180deg, #b89550, #9a6a38)", border: "2px solid #c4a35a", borderRadius: 4, color: "#1a0a00", fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 3, boxShadow: "0 0 20px #a8906060" }}>PLAY AGAIN</button>
+        <h2 style={{ color: accent, fontSize: 40, margin: 0, letterSpacing: 6, animation: "victoryGlow 2s infinite" }}>VICTORY!</h2>
+        <p style={{ color: accent, fontSize: 14, marginTop: 10, fontStyle: "italic" }}>"{victoryLine}" — {hero?.name}</p>
+        <div style={{ color: "#FFF", fontSize: 16, marginTop: 8, letterSpacing: 2 }}>All 10 realms have been conquered!</div>
+        <div style={{ color: accent, fontSize: 24, marginTop: 16 }}>Final Score: {score}</div>
+        <div style={{ color: "#AAA", marginTop: 8, fontSize: 14 }}>Hero: {hero?.name} {hero?.icon}</div>
+        <button onClick={() => { gameRef.current.music.playConfirm(); setScore(0); setLives(3); setCurrentLevel(0); setScreen("title"); }} style={{ marginTop: 28, padding: "12px 40px", fontSize: 18, background: "linear-gradient(180deg, #b89550, #9a6a38)", border: `2px solid ${accent}`, borderRadius: 4, color: "#1a0a00", fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 3, boxShadow: `0 0 20px ${accent}60` }}>PLAY AGAIN</button>
       </div>
     );
   }

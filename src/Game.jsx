@@ -43,8 +43,9 @@ const SPEED_LINE_VX_THRESHOLD = 3.5;
 const VICTORY_FLASH_FRAMES = 12;
 const DEATH_SHAKE_EXTRA = 8;
 const DEATH_PARTICLES_EXTRA = 25;
-const DODGE_FRAMES = 12;
-const DODGE_COOLDOWN_FRAMES = 90;
+const DODGE_ROLL_FRAMES = 18;
+const DODGE_ROLL_SPEED = 6.5;
+const DODGE_ROLL_COOLDOWN = 50;
 const CHARGE_ATTACK_FRAMES = 20;
 const CHARGE_DAMAGE_MULT = 1.8;
 const PLATFORM_BOUNCE_VY = -5;
@@ -52,26 +53,73 @@ const LOW_HP_THRESHOLD = 0.25;
 const PARRY_SLOWMO_FRAMES = 25;
 const PARRY_SLOWMO_SCALE = 0.35;
 
+// Shantae-style feel
+const AIR_CONTROL = 0.82;
+const DASH_SPEED = 11;
+const DASH_FRAMES = 10;
+const DASH_COOLDOWN = 22;
+const JUMP_BUFFER_FRAMES = 8;
+const WALL_SLIDE_SPEED = 0.8;
+const WALL_JUMP_VX = 7;
+const WALL_JUMP_VY = -10.5;
+const WALL_GRAB_MARGIN = 6;
+const TELEGRAPH_FRAMES = 25;
+const UNLOCK_DOUBLE_JUMP_AFTER_LEVEL = 1;
+
+// Attack types: 0 = fast, 1 = slow, 2 = special (cooldown)
+const ATTACK_TYPES = [
+  { id: 0, name: "Fast", duration: 10, hitFrame: 7, cooldown: 12, dmgMult: 0.7, swordW: 28 },
+  { id: 1, name: "Slow", duration: 26, hitFrame: 20, cooldown: 36, dmgMult: 1.5, swordW: 42 },
+  { id: 2, name: "Special", duration: 18, hitFrame: 12, cooldown: 0, specialCooldownMax: 180, dmgMult: 2, swordW: 38 },
+];
+
 const CHARACTERS = [
   { id: 0, name: "Knight", color: "#4A90D9", accent: "#FFD700", speed: 4, jump: -12, health: 100, attack: 15, desc: "Balanced warrior", icon: "⚔️" },
   { id: 1, name: "Rogue", color: "#8B45A6", accent: "#00FF88", speed: 6, jump: -11, health: 70, attack: 12, desc: "Swift & deadly", icon: "🗡️" },
-  { id: 2, name: "Mage", color: "#2ECFCF", accent: "#FF6B9D", speed: 3.5, jump: -11.5, health: 75, attack: 20, desc: "Arcane power", icon: "🔮" },
+  {
+    id: 2,
+    name: "Lyra",
+    title: "the Starweaver",
+    color: "#2ECFCF",
+    accent: "#FF6B9D",
+    speed: 3.5,
+    jump: -11.5,
+    health: 75,
+    attack: 20,
+    desc: "Chaos mage. Book-smart, battle-crazy. Fires first, asks questions never.",
+    quote: "\"If it's not on fire, I'm not trying hard enough.\"",
+    personality: "Sarcastic, curious, and utterly convinced that every problem is just a spell away from being someone else's problem. Collects rare teas and enemy tears.",
+    icon: "🔮",
+  },
   { id: 3, name: "Berserker", color: "#E74C3C", accent: "#FF8C00", speed: 3, jump: -10.5, health: 120, attack: 25, desc: "Raw strength", icon: "🪓" },
   { id: 4, name: "Ranger", color: "#27AE60", accent: "#F1C40F", speed: 5, jump: -13, health: 80, attack: 13, desc: "Double jump", icon: "🏹" },
   { id: 5, name: "Paladin", color: "#F39C12", accent: "#ECF0F1", speed: 3.5, jump: -11, health: 140, attack: 18, desc: "Holy shield", icon: "🛡️" },
 ];
 
 const LEVELS = [
-  { id: 0, name: "Enchanted Forest", bg1: "#0a1628", bg2: "#1a3a2a", bg3: "#2d5a3d", platform: "#3E7B4E", accent: "#7CFC00", hazard: "thorns", bossName: "Treant King", bossColor: "#2E7D32" },
-  { id: 1, name: "Crystal Caves", bg1: "#0d0d2b", bg2: "#1a1a4e", bg3: "#2d2d6b", platform: "#5C6BC0", accent: "#E040FB", hazard: "crystals", bossName: "Crystal Golem", bossColor: "#7E57C2" },
-  { id: 2, name: "Volcanic Wastes", bg1: "#1a0a00", bg2: "#3d1a00", bg3: "#5a2d0a", platform: "#8D6E63", accent: "#FF5722", hazard: "lava", bossName: "Magma Wyrm", bossColor: "#D84315" },
-  { id: 3, name: "Frozen Peaks", bg1: "#0a1a2e", bg2: "#1a3a5e", bg3: "#3a6a8e", platform: "#B0BEC5", accent: "#00BCD4", hazard: "ice", bossName: "Frost Giant", bossColor: "#0097A7" },
-  { id: 4, name: "Ancient Ruins", bg1: "#1a1a0a", bg2: "#3d3a1a", bg3: "#5a5a3d", platform: "#A1887F", accent: "#FFD54F", hazard: "traps", bossName: "Stone Guardian", bossColor: "#795548" },
-  { id: 5, name: "Shadow Marsh", bg1: "#0a0a1a", bg2: "#1a1a2d", bg3: "#2d2d3a", platform: "#546E7A", accent: "#76FF03", hazard: "poison", bossName: "Swamp Hydra", bossColor: "#37474F" },
-  { id: 6, name: "Sky Citadel", bg1: "#1a2a4e", bg2: "#3a5a8e", bg3: "#5a8abe", platform: "#90CAF9", accent: "#FFF176", hazard: "wind", bossName: "Storm Lord", bossColor: "#1565C0" },
-  { id: 7, name: "Desert Temple", bg1: "#2a1a0a", bg2: "#5a3a1a", bg3: "#8a6a3a", platform: "#D4A056", accent: "#FF7043", hazard: "sand", bossName: "Pharaoh Lich", bossColor: "#BF8C3E" },
-  { id: 8, name: "Abyssal Depths", bg1: "#000a1a", bg2: "#001a3a", bg3: "#002a4a", platform: "#37474F", accent: "#18FFFF", hazard: "water", bossName: "Leviathan", bossColor: "#00695C" },
-  { id: 9, name: "Dragon's Keep", bg1: "#1a0000", bg2: "#3d0a0a", bg3: "#5a1a1a", platform: "#4E342E", accent: "#FF1744", hazard: "fire", bossName: "Elder Dragon", bossColor: "#B71C1C" },
+  { id: 0, name: "Enchanted Forest", bg1: "#0a1628", bg2: "#1a3a2a", bg3: "#2d5a3d", platform: "#3E7B4E", accent: "#7CFC00", hazard: "thorns", bossName: "Treant King", bossColor: "#2E7D32", bossLine: "The Treant King blocks your path!" },
+  { id: 1, name: "Crystal Caves", bg1: "#0d0d2b", bg2: "#1a1a4e", bg3: "#2d2d6b", platform: "#5C6BC0", accent: "#E040FB", hazard: "crystals", bossName: "Crystal Golem", bossColor: "#7E57C2", bossLine: "The Crystal Golem awakens!" },
+  { id: 2, name: "Volcanic Wastes", bg1: "#1a0a00", bg2: "#3d1a00", bg3: "#5a2d0a", platform: "#8D6E63", accent: "#FF5722", hazard: "lava", bossName: "Magma Wyrm", bossColor: "#D84315", bossLine: "The Magma Wyrm rises from the flames!" },
+  { id: 3, name: "Frozen Peaks", bg1: "#0a1a2e", bg2: "#1a3a5e", bg3: "#3a6a8e", platform: "#B0BEC5", accent: "#00BCD4", hazard: "ice", bossName: "Frost Giant", bossColor: "#0097A7", bossLine: "The Frost Giant stirs!" },
+  { id: 4, name: "Ancient Ruins", bg1: "#1a1a0a", bg2: "#3d3a1a", bg3: "#5a5a3d", platform: "#A1887F", accent: "#FFD54F", hazard: "traps", bossName: "Stone Guardian", bossColor: "#795548", bossLine: "The Stone Guardian awakens!" },
+  { id: 5, name: "Shadow Marsh", bg1: "#0a0a1a", bg2: "#1a1a2d", bg3: "#2d2d3a", platform: "#546E7A", accent: "#76FF03", hazard: "poison", bossName: "Swamp Hydra", bossColor: "#37474F", bossLine: "The Swamp Hydra emerges!" },
+  { id: 6, name: "Sky Citadel", bg1: "#1a2a4e", bg2: "#3a5a8e", bg3: "#5a8abe", platform: "#90CAF9", accent: "#FFF176", hazard: "wind", bossName: "Storm Lord", bossColor: "#1565C0", bossLine: "The Storm Lord commands the skies!" },
+  { id: 7, name: "Desert Temple", bg1: "#2a1a0a", bg2: "#5a3a1a", bg3: "#8a6a3a", platform: "#D4A056", accent: "#FF7043", hazard: "sand", bossName: "Pharaoh Lich", bossColor: "#BF8C3E", bossLine: "The Pharaoh Lich defies death!" },
+  { id: 8, name: "Abyssal Depths", bg1: "#000a1a", bg2: "#001a3a", bg3: "#002a4a", platform: "#37474F", accent: "#18FFFF", hazard: "water", bossName: "Leviathan", bossColor: "#00695C", bossLine: "The Leviathan hungers!" },
+  { id: 9, name: "Dragon's Keep", bg1: "#1a0000", bg2: "#3d0a0a", bg3: "#5a1a1a", platform: "#4E342E", accent: "#FF1744", hazard: "fire", bossName: "Elder Dragon", bossColor: "#B71C1C", bossLine: "The Elder Dragon awaits!" },
+];
+
+const LEVEL_INTRO_LINES = [
+  "The forest holds many secrets...",
+  "Crystals hum with ancient power.",
+  "Only the bold dare tread here.",
+  "Cold winds bite deep.",
+  "Ruins remember the old wars.",
+  "The marsh breathes poison.",
+  "The sky citadel looms.",
+  "Sands hide more than treasure.",
+  "The depths swallow the light.",
+  "The final trial begins.",
 ];
 
 // ============================================================
@@ -83,6 +131,7 @@ function generateLevel(levelId) {
   const enemies = [];
   const hazards = [];
   const coins = [];
+  const hearts = [];
   const width = 4800 + levelId * 400;
 
   // Ground
@@ -108,8 +157,9 @@ function generateLevel(levelId) {
     platforms.push({ x: px, y: py, w: TILE * 3, h: TILE / 2, type: "moving", originX: px, moveRange: 120, moveSpeed: 0.5 + (i % 3) * 0.3 });
   }
 
-  // Enemies
-  for (let i = 0; i < 15 + levelId * 3; i++) {
+  // Enemies (fewer)
+  const enemyCount = 4 + levelId;
+  for (let i = 0; i < enemyCount; i++) {
     const ex = 400 + ((seed + i * 197) % (width - 800));
     enemies.push({
       x: ex, y: CANVAS_H - TILE - 36, w: 32, h: 36,
@@ -122,12 +172,57 @@ function generateLevel(levelId) {
     });
   }
 
-  // Hazards
-  for (let i = 0; i < 8 + levelId * 2; i++) {
-    const hx = 500 + ((seed + i * 157) % (width - 600));
+  // Ground hazards (more, varied width)
+  for (let i = 0; i < 12 + levelId * 3; i++) {
+    const hx = 400 + ((seed + i * 157) % (width - 700));
+    const hw = (i % 3 === 0 ? TILE * 3 : TILE * 2);
     hazards.push({
-      x: hx, y: CANVAS_H - TILE - 12, w: TILE * 2, h: 12,
+      x: hx, y: CANVAS_H - TILE - 12, w: hw, h: 12,
       type: lvl.hazard, damage: 8 + levelId * 2, timer: 0,
+    });
+  }
+
+  // Ceiling spikes (environmental)
+  for (let i = 0; i < 6 + levelId; i++) {
+    const cx = 350 + ((seed + i * 211 + 100) % (width - 700));
+    hazards.push({
+      x: cx, y: 0, w: TILE * 2, h: 52,
+      shape: "ceiling", type: lvl.hazard, damage: 10 + levelId * 2, timer: 0,
+    });
+  }
+
+  // Moving hazards (patrol)
+  for (let i = 0; i < 4 + levelId; i++) {
+    const mx = 600 + ((seed + i * 263) % (width - 1000));
+    const mw = TILE * 2;
+    hazards.push({
+      x: mx, y: CANVAS_H - TILE - 12, w: mw, h: 12,
+      type: lvl.hazard, damage: 8 + levelId * 2, timer: 0,
+      originX: mx, moveRange: 80 + (i % 3) * 40, moveSpeed: 0.4 + (i % 4) * 0.2,
+    });
+  }
+
+  // Lore scrolls
+  const LORE_TEXTS = [
+    "The realms fell one by one to the Blight.",
+    "Only the chosen blade can restore the balance.",
+    "Crystals here remember the old kings.",
+    "Fire and ice have met in this place before.",
+    "These ruins hold more than bones.",
+    "The marsh does not forgive the careless.",
+    "The citadel was built on sacrifice.",
+    "Gold and sand hide the same thirst.",
+    "The deep has no memory of the sun.",
+    "The dragon remembers when the world was young.",
+  ];
+  const scrolls = [];
+  for (let i = 0; i < 3 + Math.min(levelId, 4); i++) {
+    const sx = 500 + ((seed + i * 311) % (width - 1000));
+    const sy = 80 + ((seed + i * 127) % 300);
+    scrolls.push({
+      x: sx, y: sy, w: 24, h: 32,
+      text: LORE_TEXTS[(levelId * 2 + i) % LORE_TEXTS.length],
+      collected: false,
     });
   }
 
@@ -136,6 +231,17 @@ function generateLevel(levelId) {
     const cx = 200 + ((seed + i * 113) % (width - 400));
     const cy = 100 + ((seed + i * 79) % 360);
     coins.push({ x: cx, y: cy, collected: false, bobOffset: Math.random() * Math.PI * 2 });
+  }
+
+  // Healing items (hearts)
+  const heartCount = 8 + levelId * 2;
+  for (let i = 0; i < heartCount; i++) {
+    const hx = 350 + ((seed + i * 241) % (width - 650));
+    const hy = 120 + ((seed + i * 89) % 320);
+    hearts.push({
+      x: hx, y: hy, collected: false, bobOffset: Math.random() * Math.PI * 2,
+      healAmount: 20 + levelId * 4,
+    });
   }
 
   // Boss area at end
@@ -154,9 +260,10 @@ function generateLevel(levelId) {
     vx: 0, vy: 0, facing: -1, hit: 0,
     name: lvl.bossName, color: lvl.bossColor,
     projectiles: [],
+    telegraphTimer: 0,
   };
 
-  return { platforms, enemies, hazards, coins, boss, width, levelId };
+  return { platforms, enemies, hazards, coins, hearts, scrolls, boss, width, levelId };
 }
 
 // ============================================================
@@ -324,11 +431,14 @@ class MusicEngine {
     } catch (e) {}
   }
 
-  playFootstep() {
+  playFootstep(surface = "ground", volume = 1) {
     try {
-      const s = new Tone.Synth({ volume: -22, oscillator: { type: "sine" }, envelope: { attack: 0.01, decay: 0.04, sustain: 0, release: 0.02 } }).toDestination();
+      const pitchBySurface = { ground: "G4", float: "A4", moving: "Bb4" };
+      const note = pitchBySurface[surface] || "G4";
+      const volDb = volume <= 0 ? -60 : -22 + Math.log10(Math.max(0.01, volume)) * 20;
+      const s = new Tone.Synth({ volume: volDb, oscillator: { type: "sine" }, envelope: { attack: 0.01, decay: 0.04, sustain: 0, release: 0.02 } }).toDestination();
       s.detune.value = (Math.random() - 0.5) * 120;
-      s.triggerAttackRelease("G4", "32n");
+      s.triggerAttackRelease(note, "32n");
       setTimeout(() => s.dispose(), 150);
     } catch (e) {}
   }
@@ -339,6 +449,14 @@ class MusicEngine {
       s.detune.value = (Math.random() - 0.5) * 60;
       s.triggerAttackRelease("A5", "16n");
       setTimeout(() => { s.triggerAttackRelease("C6", "16n"); setTimeout(() => s.dispose(), 500); }, 80);
+    } catch (e) {}
+  }
+
+  playHeal() {
+    try {
+      const s = new Tone.Synth({ volume: -10, oscillator: { type: "sine" }, envelope: { attack: 0.02, decay: 0.2, sustain: 0.3, release: 0.3 } }).toDestination();
+      s.triggerAttackRelease("E5", "8n");
+      setTimeout(() => { s.triggerAttackRelease("G5", "8n"); setTimeout(() => { s.triggerAttackRelease("C6", "8n"); setTimeout(() => s.dispose(), 400); }, 80); }, 80);
     } catch (e) {}
   }
 
@@ -416,7 +534,7 @@ function updateShake(g) {
 // ============================================================
 // DRAWING HELPERS
 // ============================================================
-function drawCharacter(ctx, x, y, char, facing, frame, attacking, hurt, landSquashFrames = 0, jumpStretchFrames = 0) {
+function drawCharacter(ctx, x, y, char, facing, frame, attacking, hurt, landSquashFrames = 0, jumpStretchFrames = 0, dodgeRollFrames = 0) {
   const c = CHARACTERS[char];
   const bob = Math.sin(frame * 0.15) * 2;
   const atkAnim = attacking > 0 ? Math.sin(attacking * 0.5) * 20 : 0;
@@ -426,8 +544,16 @@ function drawCharacter(ctx, x, y, char, facing, frame, attacking, hurt, landSqua
   if (facing < 0) ctx.scale(-1, 1);
   if (hurt > 0 && Math.floor(hurt) % 4 < 2) ctx.globalAlpha = 0.5;
 
+  // Dodge roll: squash into a roll
+  if (dodgeRollFrames > 0) {
+    ctx.translate(0, 18);
+    ctx.scale(1.4, 0.45);
+    ctx.translate(0, -18);
+    ctx.globalAlpha = 0.85;
+  }
+
   // Squash on land (scale from feet)
-  if (landSquashFrames > 0) {
+  if (landSquashFrames > 0 && dodgeRollFrames <= 0) {
     ctx.translate(0, 18);
     ctx.scale(0.85 + (1 - 0.85) * (1 - landSquashFrames / 8), 1.2 - (1.2 - 1) * (1 - landSquashFrames / 8));
     ctx.translate(0, -18);
@@ -597,6 +723,14 @@ function drawBoss(ctx, boss, camX, frame, levelId) {
   ctx.lineWidth = 1;
   ctx.strokeRect(-40, -boss.h / 2 - 40, 80, 8);
 
+  if (boss.telegraphTimer > 0) {
+    ctx.fillStyle = "#FFD700";
+    ctx.font = "bold 28px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("!", 0, -boss.h / 2 - 55);
+    ctx.textAlign = "left";
+  }
+
   ctx.globalAlpha = 1;
   ctx.restore();
 
@@ -647,7 +781,7 @@ function drawBackground(ctx, lvl, camX, frame) {
   const sway = Math.sin(camX * 0.02 + frame * 0.03) * 3;
   ctx.fillStyle = lvl.bg2 + "80";
   for (let i = 0; i < 8; i++) {
-    const mx = (i * 200 - (camX * 0.2) % 1600 + 1600) % 1600 - 200;
+    const mx = (i * 200 - (camX * 0.15) % 1600 + 1600) % 1600 - 200;
     const mh = 80 + (i * 37) % 120;
     const s = sway + (i % 2 === 0 ? 1 : -1) * 2;
     ctx.beginPath();
@@ -659,13 +793,23 @@ function drawBackground(ctx, lvl, camX, frame) {
 
   ctx.fillStyle = lvl.bg3 + "60";
   for (let i = 0; i < 12; i++) {
-    const mx = (i * 150 - (camX * 0.4) % 1800 + 1800) % 1800 - 150;
+    const mx = (i * 150 - (camX * 0.35) % 1800 + 1800) % 1800 - 150;
     const mh = 40 + (i * 29) % 80;
     const s = sway * 0.8 + (i % 3 - 1) * 1.5;
     ctx.beginPath();
     ctx.moveTo(mx, CANVAS_H);
     ctx.lineTo(mx + 40 + s, CANVAS_H - mh);
     ctx.lineTo(mx + 80, CANVAS_H);
+    ctx.fill();
+  }
+  ctx.fillStyle = lvl.bg3 + "40";
+  for (let i = 0; i < 10; i++) {
+    const mx = (i * 220 - (camX * 0.55) % 2200 + 2200) % 2200 - 220;
+    const mh = 30 + (i * 19) % 50;
+    ctx.beginPath();
+    ctx.moveTo(mx, CANVAS_H);
+    ctx.lineTo(mx + 35, CANVAS_H - mh);
+    ctx.lineTo(mx + 70, CANVAS_H);
     ctx.fill();
   }
 
@@ -705,6 +849,26 @@ function drawBackground(ctx, lvl, camX, frame) {
 function drawHazard(ctx, hazard, camX, frame, lvl) {
   const x = hazard.x - camX;
   const y = hazard.y;
+
+  if (hazard.shape === "ceiling") {
+    ctx.fillStyle = lvl.accent;
+    const spikeH = 12;
+    const step = 14;
+    for (let i = 0; i < hazard.w / step; i++) {
+      const sx = x + i * step + step / 2;
+      const bob = Math.sin(frame * 0.08 + i) * 2;
+      ctx.beginPath();
+      ctx.moveTo(sx + bob, y + hazard.h);
+      ctx.lineTo(sx - 6 + bob, y + 4);
+      ctx.lineTo(sx + 6 + bob, y + 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = "rgba(0,0,0,0.3)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    return;
+  }
 
   ctx.fillStyle = lvl.accent;
   if (lvl.hazard === "thorns" || lvl.hazard === "crystals") {
@@ -815,6 +979,54 @@ function drawCoin(ctx, coin, camX, frame, lvl) {
   ctx.restore();
 }
 
+function drawScroll(ctx, scroll, camX, frame, lvl) {
+  if (scroll.collected) return;
+  const x = scroll.x - camX + scroll.w / 2;
+  const y = scroll.y + scroll.h / 2 + Math.sin(frame * 0.06) * 2;
+  if (x > CANVAS_W + 30 || x < -30) return;
+  ctx.save();
+  ctx.fillStyle = lvl.accent + "40";
+  ctx.strokeStyle = lvl.accent;
+  ctx.lineWidth = 2;
+  ctx.fillRect(scroll.x - camX, scroll.y, scroll.w, scroll.h);
+  ctx.strokeRect(scroll.x - camX, scroll.y, scroll.w, scroll.h);
+  ctx.fillStyle = "#FFF";
+  ctx.font = "10px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("?", x, y + 4);
+  ctx.restore();
+}
+
+function drawHeart(ctx, heart, camX, frame, lvl) {
+  if (heart.collected) return;
+  const x = heart.x - camX + 12;
+  const y = heart.y + 12 + Math.sin(frame * 0.06 + heart.bobOffset) * 3;
+  if (x > CANVAS_W + 24 || x < -24) return;
+
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.fillStyle = "#E53935";
+  ctx.strokeStyle = "#B71C1C";
+  ctx.lineWidth = 2;
+  ctx.shadowColor = "#FF6B6B";
+  ctx.shadowBlur = 6;
+  ctx.beginPath();
+  ctx.moveTo(0, 6);
+  ctx.bezierCurveTo(-10, -8, -10, -14, 0, -6);
+  ctx.bezierCurveTo(10, -14, 10, -8, 0, 6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = "#FFCDD2";
+  ctx.globalAlpha = 0.9;
+  ctx.beginPath();
+  ctx.arc(-4, -2, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
 // ============================================================
 // MAIN GAME COMPONENT
 // ============================================================
@@ -827,6 +1039,11 @@ export default function Game() {
   const [lives, setLives] = useState(3);
   const [musicOn, setMusicOn] = useState(true);
   const [hoveredChar, setHoveredChar] = useState(null);
+  const [clearedLevels, setClearedLevels] = useState(() => new Set());
+  const [paused, setPaused] = useState(false);
+  const [sfxVolume, setSfxVolume] = useState(1);
+  const [musicVolume, setMusicVolume] = useState(1);
+  const [reduceShake, setReduceShake] = useState(1);
 
   const gameRef = useRef({
     keys: {},
@@ -861,10 +1078,22 @@ export default function Game() {
     slashTrail: [],
     runDustTimer: 0,
     victoryFlashFrames: 0,
+    lastDashTime: 0,
+    lastDashDir: 0,
+    jumpBufferTimer: 0,
+    dashFrames: 0,
+    dashCooldown: 0,
+    bossIntroTimer: 0,
+    levelIntroLineTimer: 0,
+    loreLine: null,
+    loreLineTimer: 0,
+    lastSurface: "ground",
   });
 
   const initPlayer = useCallback((charId, levelId) => {
     const c = CHARACTERS[charId];
+    const hasDoubleJumpUnlock = levelId > UNLOCK_DOUBLE_JUMP_AFTER_LEVEL;
+    const maxJumps = (hasDoubleJumpUnlock || charId === 4) ? 2 : 1;
     return {
       x: 80, y: CANVAS_H - TILE - 40,
       w: 32, h: 36,
@@ -881,8 +1110,8 @@ export default function Game() {
       attackCooldown: 0,
       hurt: 0,
       invincible: 0,
-      jumpsLeft: charId === 4 ? 2 : 1,
-      maxJumps: charId === 4 ? 2 : 1,
+      jumpsLeft: maxJumps,
+      maxJumps,
       frame: 0,
       shieldActive: false,
       shieldCooldown: 0,
@@ -891,8 +1120,18 @@ export default function Game() {
       coyoteTimer: 0,
       jumpHeld: false,
       attackCharge: 0,
-      dodgeFrames: 0,
-      dodgeCooldown: 0,
+      dodgeRollFrames: 0,
+      dodgeRollCooldown: 0,
+      attackType: 0,
+      attackHitFrame: ATTACK_TYPES[0].hitFrame,
+      attackTypeUsed: 0,
+      attackDmgMult: ATTACK_TYPES[0].dmgMult,
+      specialCooldown: 0,
+      specialCooldownMax: ATTACK_TYPES[2].specialCooldownMax,
+      wallSlideLeft: false,
+      wallSlideRight: false,
+      dashFrames: 0,
+      dashCooldown: 0,
     };
   }, []);
 
@@ -951,6 +1190,10 @@ export default function Game() {
     g.slashTrail = [];
     g.runDustTimer = 0;
     g.victoryFlashFrames = 0;
+    g.bossIntroTimer = 0;
+    g.levelIntroLineTimer = 90;
+    g.loreLine = null;
+    g.loreLineTimer = 0;
     setScreen("game");
     if (musicOn) g.music.start(levelId);
   }, [selectedChar, initPlayer, musicOn]);
@@ -969,59 +1212,134 @@ export default function Game() {
       const lvl = g.level;
       if (!p || !lvl) { requestAnimationFrame(gameLoop); return; }
 
+      if (g.keys["Escape"]) { setPaused((prev) => !prev); g.keys["Escape"] = false; }
+      if (paused && g.keys["KeyR"]) { startGame(lvl.levelId); setPaused(false); g.keys["KeyR"] = false; }
+      if (paused && g.keys["KeyQ"]) { setScreen("title"); setPaused(false); g.keys["KeyQ"] = false; }
+
+      const levelData = LEVELS[lvl.levelId];
+
+      if (!paused) {
       const inHitStop = g.hitStopFrames > 0;
       if (inHitStop) g.hitStopFrames--;
 
       if (!inHitStop) {
       g.frame++;
       g.levelTimer++;
-      const levelData = LEVELS[lvl.levelId];
 
-      // INPUT
+      const isRolling = p.dodgeRollFrames > 0;
+      const isDashing = p.dashFrames > 0;
+
+      // Jump buffer: pressing jump slightly before landing still triggers jump
+      if (g.keys["ArrowUp"] || g.keys["KeyW"] || g.keys["Space"]) g.jumpBufferTimer = JUMP_BUFFER_FRAMES;
+      if (g.jumpBufferTimer > 0) g.jumpBufferTimer--;
       if (g.jumpKeyReleased) { p.jumpHeld = false; g.jumpKeyReleased = false; }
-      if (g.keys["ArrowLeft"] || g.keys["KeyA"]) { p.vx -= p.speed * 0.4; p.facing = -1; }
-      if (g.keys["ArrowRight"] || g.keys["KeyD"]) { p.vx += p.speed * 0.4; p.facing = 1; }
+
+      // INPUT (no movement/attack during dodge roll or dash)
+      if (!isRolling && !isDashing) {
+      const airMult = p.grounded ? 1 : AIR_CONTROL;
+      if (g.keys["ArrowLeft"] || g.keys["KeyA"]) { p.vx -= p.speed * 0.4 * airMult; p.facing = -1; }
+      if (g.keys["ArrowRight"] || g.keys["KeyD"]) { p.vx += p.speed * 0.4 * airMult; p.facing = 1; }
       const canJump = p.jumpsLeft > 0 || p.coyoteTimer > 0;
-      if ((g.keys["ArrowUp"] || g.keys["KeyW"] || g.keys["Space"]) && canJump) {
-        if (p.coyoteTimer > 0 && p.jumpsLeft === 0) p.jumpsLeft = p.maxJumps - 1;
-        else p.jumpsLeft--;
-        p.vy = p.jumpPower; p.grounded = false; p.coyoteTimer = 0;
-        p.jumpStretchFrames = 3; p.jumpHeld = true;
-        g.keys["ArrowUp"] = false; g.keys["KeyW"] = false; g.keys["Space"] = false;
-        if (musicOn) g.music.playJump();
-        for (let i = 0; i < 5; i++) g.particles.push(new Particle(p.x + 16, p.y + p.h, "#FFF", (Math.random() - 0.5) * 3, Math.random() * -2, 20, 3));
+      const bufferJump = g.jumpBufferTimer > 0 && (p.jumpsLeft > 0 || p.coyoteTimer > 0 || p.wallSlideLeft || p.wallSlideRight);
+      const jumpPressed = (g.keys["ArrowUp"] || g.keys["KeyW"] || g.keys["Space"]) && (canJump || p.wallSlideLeft || p.wallSlideRight);
+      if (jumpPressed || bufferJump) {
+        if (bufferJump) g.jumpBufferTimer = 0;
+        if (p.wallSlideLeft || p.wallSlideRight) {
+          p.vy = WALL_JUMP_VY;
+          p.vx = p.wallSlideLeft ? WALL_JUMP_VX : -WALL_JUMP_VX;
+          p.facing = p.wallSlideLeft ? 1 : -1;
+          p.jumpsLeft = p.maxJumps - 1;
+          p.grounded = false;
+          p.coyoteTimer = 0;
+          p.wallSlideLeft = false;
+          p.wallSlideRight = false;
+          p.jumpStretchFrames = 3;
+          g.keys["ArrowUp"] = false; g.keys["KeyW"] = false; g.keys["Space"] = false;
+          if (musicOn) g.music.playJump();
+          for (let i = 0; i < 6; i++) g.particles.push(new Particle(p.x + 16, p.y + p.h, "#FFF", (p.facing > 0 ? -1 : 1) * (2 + Math.random() * 2), Math.random() * -2, 18, 3));
+        } else {
+          if (p.coyoteTimer > 0 && p.jumpsLeft === 0) p.jumpsLeft = p.maxJumps - 1;
+          else p.jumpsLeft--;
+          p.vy = p.jumpPower; p.grounded = false; p.coyoteTimer = 0;
+          p.jumpStretchFrames = 3; p.jumpHeld = true;
+          g.keys["ArrowUp"] = false; g.keys["KeyW"] = false; g.keys["Space"] = false;
+          if (musicOn) g.music.playJump();
+          for (let i = 0; i < 5; i++) g.particles.push(new Particle(p.x + 16, p.y + p.h, "#FFF", (Math.random() - 0.5) * 3, Math.random() * -2, 20, 3));
+        }
       }
-      if ((g.keys["ShiftLeft"] || g.keys["ShiftRight"]) && p.dodgeCooldown <= 0 && p.dodgeFrames <= 0) p.dodgeFrames = DODGE_FRAMES;
-      if (p.dodgeFrames > 0) p.dodgeFrames--;
-      if (p.dodgeCooldown > 0) p.dodgeCooldown--;
+      if (!isRolling && (g.keys["ShiftLeft"] || g.keys["ShiftRight"]) && p.dodgeRollCooldown <= 0) {
+        if (p.attacking > 0) { p.attacking = 0; p.attackCooldown = 0; }
+        p.dodgeRollFrames = DODGE_ROLL_FRAMES;
+        if (musicOn) g.music.playFootstep("ground", sfxVolume);
+      }
+      if (p.dodgeRollFrames > 0) {
+        p.dodgeRollFrames--;
+        p.invincible = 2;
+        p.x += p.facing * DODGE_ROLL_SPEED * (g.timeScale ?? 1);
+        if (p.dodgeRollFrames <= 0) p.dodgeRollCooldown = DODGE_ROLL_COOLDOWN;
+      }
+      if (p.dodgeRollCooldown > 0) p.dodgeRollCooldown--;
+      if ((g.keys["KeyC"] || g.keys["KeyV"]) && p.dashCooldown <= 0 && !isRolling && p.dashFrames <= 0) {
+        p.dashFrames = DASH_FRAMES;
+        p.dashCooldown = DASH_COOLDOWN;
+        if (musicOn) g.music.playFootstep("ground", sfxVolume);
+      }
+      if (p.dashFrames > 0) {
+        p.dashFrames--;
+        p.invincible = 2;
+        p.x += p.facing * DASH_SPEED * (g.timeScale ?? 1);
+        if (p.dashFrames <= 0) p.dashCooldown = DASH_COOLDOWN;
+      }
+      if (p.dashCooldown > 0) p.dashCooldown--;
+      if (g.keys["KeyDigit1"]) p.attackType = 0;
+      if (g.keys["KeyDigit2"]) p.attackType = 1;
+      if (g.keys["KeyDigit3"]) p.attackType = 2;
+      const at = ATTACK_TYPES[p.attackType];
+      const canSpecial = p.attackType === 2 && p.specialCooldown <= 0;
+      const canAttack = p.attackCooldown <= 0 && (p.attackType !== 2 || canSpecial);
       const attackKeyHeld = g.keys["KeyZ"] || g.keys["KeyJ"];
       if (attackKeyHeld) p.attackCharge++;
-      else if (p.attackCharge > 0 && p.attackCooldown <= 0) {
-        const charged = p.attackCharge >= CHARGE_ATTACK_FRAMES;
-        p.attacking = 15; p.attackCooldown = charged ? 35 : 20; p.chargedAttack = charged; p.attackCharge = 0;
+      else if (p.attackCharge > 0 && canAttack) {
+        const charged = p.attackType < 2 && p.attackCharge >= CHARGE_ATTACK_FRAMES;
+        p.attacking = at.duration;
+        p.attackHitFrame = at.hitFrame;
+        p.attackCooldown = at.cooldown;
+        p.chargedAttack = charged;
+        p.attackCharge = 0;
+        if (p.attackType === 2) p.specialCooldown = p.specialCooldownMax;
+        p.attackTypeUsed = p.attackType;
+        p.attackDmgMult = at.dmgMult;
         if (musicOn) g.music.playHit();
-        const count = charged ? 18 : 8;
+        const count = p.attackType === 2 || charged ? 14 : 8;
         for (let i = 0; i < count; i++) {
           const angle = (p.facing > 0 ? 0 : Math.PI) + (Math.random() - 0.5) * 1.2;
-          g.particles.push(new Particle(p.x + 16 + p.facing * 16, p.y + 10, CHARACTERS[p.charId].accent, Math.cos(angle) * (3 + Math.random() * 3), Math.sin(angle) * (3 + Math.random() * 3) - 2, charged ? 22 : 15, charged ? 5 : 4));
+          g.particles.push(new Particle(p.x + 16 + p.facing * 16, p.y + 10, CHARACTERS[p.charId].accent, Math.cos(angle) * (3 + Math.random() * 3), Math.sin(angle) * (3 + Math.random() * 3) - 2, p.attackType === 2 ? 20 : 15, 4));
         }
       }
       if (p.charId === 5 && (g.keys["KeyX"] || g.keys["KeyK"]) && p.shieldCooldown <= 0) {
         p.shieldActive = true; p.shieldCooldown = 120;
         setTimeout(() => { if (g.player) g.player.shieldActive = false; }, 1500);
       }
+      }
 
       // PHYSICS (time scale for big moments)
       if (g.timeScaleTimer > 0) { g.timeScaleTimer--; g.timeScale += (1 - g.timeScale) * 0.15; }
       else g.timeScale = 1;
       const dt = g.timeScale;
-      p.vy += GRAVITY * dt; p.vx *= FRICTION;
-      if (!p.grounded && p.vy < 0 && !p.jumpHeld) p.vy *= JUMP_CUT_MULT;
+      if (p.dashFrames > 0 || p.dodgeRollFrames > 0) {
+        p.vx = 0;
+        p.vy = 0;
+      } else {
+        p.vy += GRAVITY * dt;
+        p.vx *= FRICTION;
+        if (!p.grounded && p.vy < 0 && !p.jumpHeld) p.vy *= JUMP_CUT_MULT;
+      }
       p.x += p.vx * dt; p.y += p.vy * dt;
       if (p.vx > p.speed) p.vx = p.speed;
       if (p.vx < -p.speed) p.vx = -p.speed;
       if (p.attacking > 0) p.attacking--;
       if (p.attackCooldown > 0) p.attackCooldown--;
+      if (p.specialCooldown > 0) p.specialCooldown--;
       if (p.hurt > 0) p.hurt--;
       if (p.invincible > 0) p.invincible--;
       if (p.shieldCooldown > 0) p.shieldCooldown--;
@@ -1030,27 +1348,43 @@ export default function Game() {
       if (g.comboTimer > 0) g.comboTimer--; else g.comboCount = 0;
       p.grounded = false; p.frame++;
 
+      // Moving hazards
+      lvl.hazards.forEach((haz) => {
+        if (haz.moveRange != null) haz.x = haz.originX + Math.sin(g.frame * 0.02 * (haz.moveSpeed || 0.5)) * haz.moveRange;
+      });
+
       // PLATFORMS
+      p.wallSlideLeft = false;
+      p.wallSlideRight = false;
       lvl.platforms.forEach((plat) => {
         if (plat.type === "moving") plat.x = plat.originX + Math.sin(g.frame * 0.02 * plat.moveSpeed) * plat.moveRange;
-        if (p.x + p.w > plat.x && p.x < plat.x + plat.w && p.y + p.h > plat.y && p.y + p.h < plat.y + plat.h + 15 && p.vy >= 0) {
+        const vertOverlap = p.y + p.h > plat.y && p.y < plat.y + plat.h;
+        const onTop = p.x + p.w > plat.x && p.x < plat.x + plat.w && p.y + p.h > plat.y && p.y + p.h < plat.y + plat.h + 15 && p.vy >= 0;
+        if (onTop) {
           const impactVy = p.vy;
           p.y = plat.y - p.h; p.vy = 0; p.grounded = true; p.jumpsLeft = p.maxJumps; p.coyoteTimer = COYOTE_FRAMES;
+          g.lastSurface = plat.type || "ground";
           if (impactVy > 2 && musicOn) g.music.playLand(impactVy);
           if (impactVy > LAND_DUST_VY_THRESHOLD) {
-            for (let i = 0; i < 10; i++) {
+            const dustCount = impactVy > 10 ? 16 : 10;
+            for (let i = 0; i < dustCount; i++) {
               g.particles.push(new Particle(p.x + 16, p.y + p.h, "#8B7355", (Math.random() - 0.5) * 6, -Math.random() * 4 - 2, 15 + Math.floor(Math.random() * 10), 2 + Math.floor(Math.random() * 2)));
             }
           }
-          if (impactVy > 2) p.landSquashFrames = 8;
+          if (impactVy > 2) p.landSquashFrames = impactVy > 10 ? 10 : 8;
           if ((plat.type === "float" || plat.type === "moving") && impactVy > 2) p.vy = PLATFORM_BOUNCE_VY;
           if (plat.type === "moving") {
             const dx = Math.cos(g.frame * 0.02 * plat.moveSpeed) * plat.moveRange * 0.02 * plat.moveSpeed;
             p.x += dx;
           }
         }
+        if (!onTop && vertOverlap && p.vy >= -2) {
+          if (p.x + p.w >= plat.x && p.x + p.w <= plat.x + plat.w + WALL_GRAB_MARGIN && p.x < plat.x + plat.w) p.wallSlideRight = true;
+          if (p.x <= plat.x + plat.w && p.x >= plat.x - WALL_GRAB_MARGIN && p.x + p.w > plat.x) p.wallSlideLeft = true;
+        }
       });
       if (!p.grounded && p.coyoteTimer > 0) p.coyoteTimer--;
+      if (!p.grounded && (p.wallSlideLeft || p.wallSlideRight) && p.vy > WALL_SLIDE_SPEED) p.vy = WALL_SLIDE_SPEED;
       g.prevVy = p.vy;
 
       // Run dust
@@ -1077,7 +1411,7 @@ export default function Game() {
 
       // Footsteps
       if (p.grounded && Math.abs(p.vx) > 0.3) {
-        if (g.stepTimer <= 0) { if (musicOn) g.music.playFootstep(); g.stepTimer = 8; }
+        if (g.stepTimer <= 0) { if (musicOn) g.music.playFootstep(g.lastSurface || "ground", sfxVolume); g.stepTimer = 8; }
         else g.stepTimer--;
       } else g.stepTimer = 0;
 
@@ -1107,23 +1441,42 @@ export default function Game() {
         }
       });
 
+      // Healing items
+      lvl.hearts.forEach((heart) => {
+        if (heart.collected) return;
+        const dx = p.x + 16 - (heart.x + 12);
+        const dy = p.y + 18 - (heart.y + 12);
+        if (Math.abs(dx) < 28 && Math.abs(dy) < 32) {
+          heart.collected = true;
+          p.health = Math.min(p.health + heart.healAmount, p.maxHealth);
+          if (musicOn) g.music.playHeal();
+          for (let i = 0; i < 10; i++) g.particles.push(new Particle(heart.x + 12, heart.y + 12, "#FF6B6B", (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6 - 3, 22, 3));
+        }
+      });
+
+      // Lore scrolls
+      (lvl.scrolls || []).forEach((scroll) => {
+        if (scroll.collected) return;
+        if (p.x + p.w > scroll.x && p.x < scroll.x + scroll.w && p.y + p.h > scroll.y && p.y < scroll.y + scroll.h) {
+          scroll.collected = true;
+          g.loreLine = scroll.text;
+          g.loreLineTimer = 180;
+          if (musicOn) g.music.playCoin();
+        }
+      });
+
       // HAZARDS
       lvl.hazards.forEach((haz) => {
-        if (p.x + p.w > haz.x && p.x < haz.x + haz.w && p.y + p.h > haz.y && p.y < haz.y + haz.h) {
-          if (p.dodgeFrames > 0) {
-            if (musicOn) g.music.playParry(); g.timeScale = PARRY_SLOWMO_SCALE; g.timeScaleTimer = PARRY_SLOWMO_FRAMES; addShake(g, 6);
-            for (let i = 0; i < 15; i++) g.particles.push(new Particle(p.x + 16, p.y + 18, "#FFD700", (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, 25, 4));
-            p.dodgeFrames = 0; p.dodgeCooldown = DODGE_COOLDOWN_FRAMES;
-          } else if (p.invincible <= 0 && !p.shieldActive) {
-            p.health -= haz.damage; p.hurt = 20; p.invincible = 40; p.vy = -8;
-            g.damageFlashFrames = 3;
-            addShake(g, 10);
-          }
+        if (p.x + p.w > haz.x && p.x < haz.x + haz.w && p.y + p.h > haz.y && p.y < haz.y + haz.h && p.invincible <= 0 && !p.shieldActive) {
+          p.health -= haz.damage; p.hurt = 20; p.invincible = 40; p.vy = -8;
+          g.damageFlashFrames = 3;
+          addShake(g, 10);
         }
       });
 
       // SWORD HITBOX
-      const swordBox = p.attacking > 0 ? { x: p.facing > 0 ? p.x + p.w : p.x - 30, y: p.y - 5, w: 30, h: p.h + 10 } : null;
+      const swordW = p.attacking > 0 ? ATTACK_TYPES[p.attackTypeUsed ?? 0].swordW : 30;
+      const swordBox = p.attacking > 0 ? { x: p.facing > 0 ? p.x + p.w : p.x - swordW, y: p.y - 5, w: swordW, h: p.h + 10 } : null;
 
       // ENEMIES
       lvl.enemies.forEach((enemy) => {
@@ -1141,22 +1494,34 @@ export default function Game() {
         }
         if (enemy.hit > 0) enemy.hit--;
 
-        if (enemy.alive && p.x + p.w > enemy.x && p.x < enemy.x + enemy.w && p.y + p.h > enemy.y && p.y < enemy.y + enemy.h) {
-          if (p.dodgeFrames > 0) {
-            if (musicOn) g.music.playParry(); g.timeScale = PARRY_SLOWMO_SCALE; g.timeScaleTimer = PARRY_SLOWMO_FRAMES; addShake(g, 6);
-            for (let i = 0; i < 15; i++) g.particles.push(new Particle(p.x + 16, p.y + 18, "#FFD700", (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, 25, 4));
-            p.dodgeFrames = 0; p.dodgeCooldown = DODGE_COOLDOWN_FRAMES;
-          } else if (p.invincible <= 0 && !p.shieldActive) {
-            p.health -= 10 + lvl.levelId * 2; p.hurt = 20; p.invincible = 60; p.vy = -6;
-            p.vx = (p.x < enemy.x ? -1 : 1) * 5;
-            g.damageFlashFrames = 3;
-            addShake(g, 8);
+        const overlap = enemy.alive && p.x + p.w > enemy.x && p.x < enemy.x + enemy.w && p.y + p.h > enemy.y && p.y < enemy.y + enemy.h;
+        const stomping = overlap && p.vy > 0 && (p.y + p.h) - enemy.y < 22;
+        if (stomping) {
+          const stompDmg = enemy.health;
+          enemy.health -= stompDmg;
+          enemy.hit = 10;
+          enemy.vx = (p.x < enemy.x ? 1 : -1) * 4;
+          p.vy = -11;
+          p.y = enemy.y - p.h;
+          if (musicOn) g.music.playLand(8);
+          addShake(g, 5);
+          g.damageNumbers.push({ x: enemy.x + 16, y: enemy.y - 10, value: stompDmg, life: 45, vy: -1.5 });
+          for (let i = 0; i < 12; i++) g.particles.push(new Particle(enemy.x + 16, enemy.y + 18, levelData.accent, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6 - 2, 20, 4));
+          if (enemy.health <= 0) {
+            enemy.alive = false;
+            setScore((s) => s + 50);
+            for (let i = 0; i < 18; i++) g.particles.push(new Particle(enemy.x + 16, enemy.y + 18, levelData.accent, (Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8, 35, 5));
           }
+        } else if (overlap && p.invincible <= 0 && !p.shieldActive) {
+          p.health -= 10 + lvl.levelId * 2; p.hurt = 20; p.invincible = 60; p.vy = -6;
+          p.vx = (p.x < enemy.x ? -1 : 1) * 5;
+          g.damageFlashFrames = 3;
+          addShake(g, 8);
         }
 
-        if (swordBox && enemy.alive && swordBox.x + swordBox.w > enemy.x && swordBox.x < enemy.x + enemy.w && swordBox.y + swordBox.h > enemy.y && swordBox.y < enemy.y + enemy.h && p.attacking === 14) {
+        if (swordBox && enemy.alive && swordBox.x + swordBox.w > enemy.x && swordBox.x < enemy.x + enemy.w && swordBox.y + swordBox.h > enemy.y && swordBox.y < enemy.y + enemy.h && p.attacking === p.attackHitFrame) {
           const isCrit = Math.random() < CRITICAL_HIT_CHANCE;
-          const baseDmg = p.chargedAttack ? Math.ceil(p.attack * CHARGE_DAMAGE_MULT) : p.attack;
+          const baseDmg = p.chargedAttack ? Math.ceil(p.attack * CHARGE_DAMAGE_MULT) : Math.ceil(p.attack * (p.attackDmgMult ?? 1));
           const dmg = isCrit ? baseDmg * 2 : baseDmg;
           enemy.health -= dmg; enemy.hit = 10; enemy.vx = p.facing * 5;
           g.damageNumbers.push({ x: enemy.x + 16, y: enemy.y - 10, value: dmg, life: 45, vy: -1.5, critical: isCrit });
@@ -1176,8 +1541,12 @@ export default function Game() {
       const boss = lvl.boss;
       if (boss.alive && p.x > boss.x - 400) {
         g.bossActive = true;
+        if (g.bossIntroTimer === 0) g.bossIntroTimer = 150;
         if (g.bossDisplayedHp <= 0) { g.bossDisplayedHp = boss.health; g.bossGhostHp = boss.maxHealth; }
         boss.attackTimer++;
+        const attackThreshold = Math.max(30, 90 - lvl.levelId * 5);
+        if (boss.attackTimer >= attackThreshold - TELEGRAPH_FRAMES && boss.attackTimer < attackThreshold) boss.telegraphTimer = attackThreshold - boss.attackTimer;
+        else if (boss.attackTimer >= attackThreshold) boss.telegraphTimer = 0;
         const bossSpeed = 1.5 + lvl.levelId * 0.2;
         if (boss.x > p.x + 50) boss.vx = -bossSpeed;
         else if (boss.x < p.x - 50) boss.vx = bossSpeed;
@@ -1185,7 +1554,7 @@ export default function Game() {
         boss.x += boss.vx * dt; boss.facing = p.x > boss.x ? 1 : -1;
         if (boss.hit > 0) boss.hit--;
 
-        if (boss.attackTimer > 90 - lvl.levelId * 5) {
+        if (boss.attackTimer > attackThreshold) {
           boss.attackTimer = 0; boss.pattern = (boss.pattern + 1) % 3;
           if (boss.pattern === 0) {
             boss.vx = boss.facing * 8;
@@ -1198,41 +1567,27 @@ export default function Game() {
 
         boss.projectiles = boss.projectiles.filter((proj) => {
           proj.x += proj.vx * dt; proj.y += proj.vy * dt; proj.vy += 0.05 * dt; proj.life--;
-          if (Math.abs(proj.x - (p.x + 16)) < 20 && Math.abs(proj.y - (p.y + 18)) < 20) {
-            if (p.dodgeFrames > 0) {
-              if (musicOn) g.music.playParry(); g.timeScale = PARRY_SLOWMO_SCALE; g.timeScaleTimer = PARRY_SLOWMO_FRAMES; addShake(g, 6);
-              for (let i = 0; i < 15; i++) g.particles.push(new Particle(p.x + 16, p.y + 18, "#FFD700", (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, 25, 4));
-              p.dodgeFrames = 0; p.dodgeCooldown = DODGE_COOLDOWN_FRAMES;
-              return false;
-            }
-            if (p.invincible <= 0 && !p.shieldActive) {
-              p.health -= 15 + lvl.levelId * 3; p.hurt = 20; p.invincible = 60; p.vy = -6;
-              g.damageFlashFrames = 3;
-              addShake(g, 8);
-              return false;
-            }
+          if (Math.abs(proj.x - (p.x + 16)) < 20 && Math.abs(proj.y - (p.y + 18)) < 20 && p.invincible <= 0 && !p.shieldActive) {
+            p.health -= 15 + lvl.levelId * 3; p.hurt = 20; p.invincible = 60; p.vy = -6;
+            g.damageFlashFrames = 3;
+            addShake(g, 8);
+            return false;
           }
           return proj.life > 0;
         });
 
-        if (p.x + p.w > boss.x && p.x < boss.x + boss.w && p.y + p.h > boss.y && p.y < boss.y + boss.h) {
-          if (p.dodgeFrames > 0) {
-            if (musicOn) g.music.playParry(); g.timeScale = PARRY_SLOWMO_SCALE; g.timeScaleTimer = PARRY_SLOWMO_FRAMES; addShake(g, 6);
-            for (let i = 0; i < 15; i++) g.particles.push(new Particle(p.x + 16, p.y + 18, "#FFD700", (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, 25, 4));
-            p.dodgeFrames = 0; p.dodgeCooldown = DODGE_COOLDOWN_FRAMES;
-          } else if (p.invincible <= 0 && !p.shieldActive) {
-            p.health -= 20 + lvl.levelId * 3; p.hurt = 20; p.invincible = 60; p.vy = -10;
-            p.vx = (p.x < boss.x ? -1 : 1) * 8;
-            g.damageFlashFrames = 4;
-            addShake(g, 12);
-          }
+        if (p.x + p.w > boss.x && p.x < boss.x + boss.w && p.y + p.h > boss.y && p.y < boss.y + boss.h && p.invincible <= 0 && !p.shieldActive) {
+          p.health -= 20 + lvl.levelId * 3; p.hurt = 20; p.invincible = 60; p.vy = -10;
+          p.vx = (p.x < boss.x ? -1 : 1) * 8;
+          g.damageFlashFrames = 4;
+          addShake(g, 12);
         }
 
-        if (swordBox && boss.alive && swordBox.x + swordBox.w > boss.x && swordBox.x < boss.x + boss.w && swordBox.y + swordBox.h > boss.y && swordBox.y < boss.y + boss.h && p.attacking === 14) {
-          const baseDmg = p.attack + (p.charId === 2 ? 5 : 0);
+        if (swordBox && boss.alive && swordBox.x + swordBox.w > boss.x && swordBox.x < boss.x + boss.w && swordBox.y + swordBox.h > boss.y && swordBox.y < boss.y + boss.h && p.attacking === p.attackHitFrame) {
+          const base = p.attack + (p.charId === 2 ? 5 : 0);
+          const baseDmg = p.chargedAttack ? Math.ceil(base * CHARGE_DAMAGE_MULT) : Math.ceil(base * (p.attackDmgMult ?? 1));
           const isCrit = Math.random() < CRITICAL_HIT_CHANCE;
-          const chargedDmg = p.chargedAttack ? Math.ceil(baseDmg * CHARGE_DAMAGE_MULT) : baseDmg;
-          const dmg = isCrit ? chargedDmg * 2 : chargedDmg;
+          const dmg = isCrit ? baseDmg * 2 : baseDmg;
           boss.health -= dmg; boss.hit = 10;
           g.damageNumbers.push({ x: boss.x + boss.w / 2, y: boss.y - 15, value: dmg, life: 50, vy: -1.2, critical: isCrit });
           if (boss.health <= boss.maxHealth * 0.5 && !boss.phaseTriggered) {
@@ -1247,6 +1602,7 @@ export default function Game() {
 
           if (boss.health <= 0) {
             boss.alive = false;
+            setClearedLevels((prev) => new Set([...prev, lvl.levelId]));
             if (musicOn) g.music.playBossDeath();
             setScore((s) => s + 500 + lvl.levelId * 100);
             addShake(g, 20);
@@ -1258,7 +1614,11 @@ export default function Game() {
               setTimeout(() => {
                 if (!running) return;
                 if (lvl.levelId >= 9) { g.music.stop(); setScreen("victory"); }
-                else { g.music.stop(); setCurrentLevel(lvl.levelId + 1); setScreen("levelComplete"); }
+                else {
+                  g.music.stop();
+                  setCurrentLevel(lvl.levelId + 1);
+                  startGame(lvl.levelId + 1);
+                }
               }, 2000);
             }
           }
@@ -1274,18 +1634,11 @@ export default function Game() {
         setTimeout(() => {
           if (!running) return;
           g.music.stop();
-          setLives((l) => {
-            if (l <= 1) { setScreen("gameOver"); return 0; }
-            g.transitioning = false; g.player = initPlayer(selectedChar, lvl.levelId); g.camX = 0;
-            g.displayedHp = g.player.maxHealth; g.ghostHp = g.player.maxHealth;
-            return l - 1;
-          });
+          setScreen("death");
         }, 1000);
       }
 
       } // end !inHitStop
-
-      const levelData = LEVELS[g.level?.levelId ?? 0];
 
       // HP bar smooth drain (always update for draw)
       g.displayedHp += (p.health - g.displayedHp) * HP_DRAIN_RATE;
@@ -1305,6 +1658,9 @@ export default function Game() {
       if (g.damageFlashFrames > 0) g.damageFlashFrames--;
       if (g.bossPhaseFlash > 0) g.bossPhaseFlash--;
       if (g.levelTitleTimer > 0) g.levelTitleTimer--;
+      if (g.bossIntroTimer > 0) g.bossIntroTimer--;
+      if (g.levelIntroLineTimer > 0) g.levelIntroLineTimer--;
+      if (g.loreLineTimer > 0) g.loreLineTimer--;
 
       // Damage numbers update
       g.damageNumbers = g.damageNumbers.filter((d) => {
@@ -1319,11 +1675,13 @@ export default function Game() {
         if (g.bossGhostHp < g.bossDisplayedHp) g.bossGhostHp = g.bossDisplayedHp;
         g.bossGhostHp += (g.bossDisplayedHp - g.bossGhostHp) * BOSS_GHOST_HP_RATE;
       }
+      }
 
       // RENDER
       const shake = updateShake(g);
+      const shakeMult = reduceShake ?? 1;
       ctx.save();
-      ctx.translate(shake.x, shake.y);
+      ctx.translate(shake.x * shakeMult, shake.y * shakeMult);
       if (g.camY !== 0) ctx.translate(0, g.camY);
 
       drawBackground(ctx, levelData, g.camX, g.frame);
@@ -1346,6 +1704,8 @@ export default function Game() {
       lvl.platforms.forEach((plat) => drawPlatform(ctx, plat, g.camX, levelData, g.frame));
       lvl.hazards.forEach((haz) => drawHazard(ctx, haz, g.camX, g.frame, levelData));
       lvl.coins.forEach((coin) => drawCoin(ctx, coin, g.camX, g.frame, levelData));
+      lvl.hearts.forEach((heart) => drawHeart(ctx, heart, g.camX, g.frame, levelData));
+      if (lvl.scrolls) lvl.scrolls.forEach((scroll) => drawScroll(ctx, scroll, g.camX, g.frame, levelData));
       lvl.enemies.forEach((enemy) => drawEnemy(ctx, enemy, g.camX, g.frame, lvl.levelId));
       if (g.bossActive) drawBoss(ctx, boss, g.camX, g.frame, lvl.levelId);
       if (g.slashTrail && g.slashTrail.length > 0) {
@@ -1363,7 +1723,7 @@ export default function Game() {
           ctx.restore();
         });
       }
-      drawCharacter(ctx, p.x - g.camX, p.y, p.charId, p.facing, p.frame, p.attacking, p.hurt, p.landSquashFrames || 0, p.jumpStretchFrames || 0);
+      drawCharacter(ctx, p.x - g.camX, p.y, p.charId, p.facing, p.frame, p.attacking, p.hurt, p.landSquashFrames || 0, p.jumpStretchFrames || 0, p.dodgeRollFrames || 0);
 
       if (p.shieldActive) {
         ctx.strokeStyle = "#FFD70080"; ctx.lineWidth = 3;
@@ -1450,6 +1810,40 @@ export default function Game() {
       ctx.fillText(`★ ${score}`, CANVAS_W - 120, 28);
       ctx.fillStyle = "#FF6B6B"; ctx.fillText(`♥ x${lives}`, CANVAS_W - 120, 52);
 
+      // Attack type selector (1 2 3)
+      ctx.font = "bold 12px monospace";
+      const atY = 42;
+      [0, 1, 2].forEach((i) => {
+        const label = ATTACK_TYPES[i].name.charAt(0);
+        const sel = p.attackType === i;
+        ctx.fillStyle = sel ? CHARACTERS[p.charId]?.accent ?? "#FFD700" : "#666";
+        ctx.fillText(`${i + 1}:${label}`, 12 + i * 52, atY);
+        if (sel) {
+          ctx.strokeStyle = CHARACTERS[p.charId]?.accent ?? "#FFD700";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(10 + i * 52, atY - 12, 32, 14);
+          ctx.lineWidth = 1;
+        }
+      });
+      // Special cooldown gauge (for attack type 3)
+      const gaugeX = 12;
+      const gaugeY = 58;
+      const gaugeW = 120;
+      const gaugeH = 8;
+      ctx.fillStyle = "#00000099";
+      ctx.fillRect(gaugeX, gaugeY, gaugeW + 4, gaugeH + 4);
+      ctx.fillStyle = "#333";
+      ctx.fillRect(gaugeX + 2, gaugeY + 2, gaugeW, gaugeH);
+      const specialReady = 1 - (p.specialCooldown / (p.specialCooldownMax || 1));
+      ctx.fillStyle = specialReady >= 1 ? "#4CAF50" : "#555";
+      ctx.fillRect(gaugeX + 2, gaugeY + 2, gaugeW * Math.max(0, specialReady), gaugeH);
+      ctx.strokeStyle = "#FFF";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(gaugeX + 2, gaugeY + 2, gaugeW, gaugeH);
+      ctx.fillStyle = "#AAA";
+      ctx.font = "10px monospace";
+      ctx.fillText("Special", gaugeX + 4, gaugeY + gaugeH + 14);
+
       if (g.levelTitleTimer > 0) {
         const t = LEVEL_TITLE_DURATION - g.levelTitleTimer;
         const alpha = Math.min(1, t / 25);
@@ -1466,6 +1860,56 @@ export default function Game() {
         ctx.restore();
         ctx.textAlign = "left";
       }
+
+      if (g.levelIntroLineTimer > 0) {
+        const alpha = Math.min(1, g.levelIntroLineTimer / 30);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = "#FFF";
+        ctx.font = "12px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText(LEVEL_INTRO_LINES[lvl.levelId] ?? "The path awaits.", CANVAS_W / 2, 48);
+        ctx.restore();
+        ctx.textAlign = "left";
+      }
+
+      if (g.bossIntroTimer > 0) {
+        const alpha = Math.min(1, g.bossIntroTimer / 20, (150 - g.bossIntroTimer) / 25);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = levelData.accent;
+        ctx.font = "bold 18px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText(levelData.bossName ?? "Boss", CANVAS_W / 2, CANVAS_H / 2 - 20);
+        ctx.fillStyle = "#FFF";
+        ctx.font = "12px monospace";
+        ctx.fillText(levelData.bossLine ?? "", CANVAS_W / 2, CANVAS_H / 2 + 4);
+        ctx.restore();
+        ctx.textAlign = "left";
+      }
+
+      if (g.loreLineTimer > 0 && g.loreLine) {
+        const alpha = Math.min(1, g.loreLineTimer / 20, (180 - g.loreLineTimer) / 20);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = "#FFD700";
+        ctx.font = "11px monospace";
+        ctx.textAlign = "center";
+        const wrap = g.loreLine.length > 50 ? g.loreLine.slice(0, 47) + "..." : g.loreLine;
+        ctx.fillText(wrap, CANVAS_W / 2, CANVAS_H - 70);
+        ctx.restore();
+        ctx.textAlign = "left";
+      }
+
+      // Progress bar (level progress)
+      const progress = Math.max(0, Math.min(1, p.x / lvl.width));
+      ctx.fillStyle = "#00000080";
+      ctx.fillRect(0, CANVAS_H - 6, CANVAS_W, 6);
+      ctx.fillStyle = levelData.accent;
+      ctx.fillRect(0, CANVAS_H - 6, CANVAS_W * progress, 6);
+      ctx.strokeStyle = "#FFF";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(0, CANVAS_H - 6, CANVAS_W, 6);
 
       if (g.comboCount > 1) {
         ctx.fillStyle = "#FFD700"; ctx.font = `bold ${16 + g.comboCount * 2}px monospace`;
@@ -1490,8 +1934,21 @@ export default function Game() {
       if (g.levelTimer < 300) {
         ctx.globalAlpha = Math.max(0, 1 - g.levelTimer / 300);
         ctx.fillStyle = "#FFF"; ctx.font = "12px monospace"; ctx.textAlign = "center";
-        ctx.fillText("← → Move | ↑ Jump | Z Sword (hold to charge) | Shift Dodge" + (selectedChar === 5 ? " | X Shield" : ""), CANVAS_W / 2, CANVAS_H - 60);
+        ctx.fillText("← → Move | ↑ Jump | 1/2/3 Attack | Z Strike | Shift Dodge roll" + (selectedChar === 5 ? " | X Shield" : ""), CANVAS_W / 2, CANVAS_H - 60);
         ctx.textAlign = "left"; ctx.globalAlpha = 1;
+      }
+
+      if (paused) {
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        ctx.fillStyle = "#FFD700";
+        ctx.font = "bold 28px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("PAUSED", CANVAS_W / 2, CANVAS_H / 2 - 50);
+        ctx.fillStyle = "#FFF";
+        ctx.font = "14px monospace";
+        ctx.fillText("ESC Resume  |  R Restart Level  |  Q Quit to Title", CANVAS_W / 2, CANVAS_H / 2);
+        ctx.textAlign = "left";
       }
 
       requestAnimationFrame(gameLoop);
@@ -1499,7 +1956,7 @@ export default function Game() {
 
     requestAnimationFrame(gameLoop);
     return () => { running = false; };
-  }, [screen, selectedChar, score, lives, musicOn, initPlayer]);
+  }, [screen, selectedChar, score, lives, musicOn, initPlayer, paused, setPaused, reduceShake, startGame, sfxVolume]);
 
   useEffect(() => {
     const g = gameRef.current;
@@ -1547,9 +2004,15 @@ export default function Game() {
             <div key={c.id} onClick={() => setSelectedChar(c.id)} onMouseEnter={() => setHoveredChar(i)} onMouseLeave={() => setHoveredChar(null)} style={{ background: selectedChar === c.id ? `linear-gradient(135deg, ${c.color}40, ${c.accent}30)` : "#ffffff08", border: `2px solid ${selectedChar === c.id ? c.accent : hoveredChar === i ? c.color + "80" : "#ffffff15"}`, borderRadius: 8, padding: "16px 14px", cursor: "pointer", transition: "all 0.25s", transform: selectedChar === c.id ? "scale(1.03)" : hoveredChar === i ? "scale(1.01)" : "scale(1)", animation: `fadeIn ${0.3 + i * 0.1}s ease`, boxShadow: selectedChar === c.id ? `0 0 20px ${c.accent}30` : "none" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
                 <span style={{ fontSize: 28 }}>{c.icon}</span>
-                <div>
-                  <div style={{ color: c.accent, fontWeight: "bold", fontSize: 16, letterSpacing: 1 }}>{c.name}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ color: c.accent, fontWeight: "bold", fontSize: 16, letterSpacing: 1 }}>{c.name}{c.title ? ` ${c.title}` : ""}</div>
                   <div style={{ color: "#999", fontSize: 11, fontStyle: "italic" }}>{c.desc}</div>
+                  {c.quote && (selectedChar === c.id || hoveredChar === i) && (
+                    <div style={{ color: c.accent + "dd", fontSize: 10, marginTop: 6, fontStyle: "italic" }}>{c.quote}</div>
+                  )}
+                  {c.personality && selectedChar === c.id && (
+                    <div style={{ color: "#AAA", fontSize: 10, marginTop: 4, lineHeight: 1.35 }}>{c.personality}</div>
+                  )}
                 </div>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 12px", fontSize: 11, color: "#CCC" }}>
@@ -1565,7 +2028,7 @@ export default function Game() {
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", padding: "0 24px 16px", maxWidth: 720 }}>
           {LEVELS.map((lvl, i) => (
             <button key={lvl.id} onClick={() => setCurrentLevel(i)} style={{ padding: "8px 14px", fontSize: 12, background: currentLevel === i ? `linear-gradient(135deg, ${lvl.accent}50, ${lvl.platform}60)` : "#ffffff0c", border: `2px solid ${currentLevel === i ? lvl.accent : "#ffffff20"}`, borderRadius: 6, color: currentLevel === i ? "#FFF" : "#AAA", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 1, transition: "all 0.2s", boxShadow: currentLevel === i ? `0 0 12px ${lvl.accent}40` : "none" }}>
-              {i + 1}. {lvl.name}
+              {i + 1}. {lvl.name}{clearedLevels.has(i) ? " ✓" : ""}
             </button>
           ))}
         </div>
@@ -1602,17 +2065,19 @@ export default function Game() {
     );
   }
 
-  if (screen === "gameOver") {
+  if (screen === "death") {
+    const levelName = LEVELS[currentLevel]?.name ?? "Unknown";
     return (
       <div style={{ width: CANVAS_W, height: CANVAS_H, margin: "0 auto", background: "linear-gradient(135deg, #1a0000, #2a0a0a, #1a0000)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Courier New', monospace", borderRadius: 8, border: "2px solid #F4433640" }}>
         <style>{`@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }`}</style>
-        <div style={{ fontSize: 48 }}>💀</div>
-        <h2 style={{ color: "#F44336", fontSize: 36, margin: "8px 0", letterSpacing: 4, animation: "shake 0.5s ease" }}>FALLEN</h2>
-        <div style={{ color: "#FFD700", fontSize: 18, marginTop: 12 }}>Final Score: {score}</div>
-        <div style={{ color: "#999", marginTop: 8, fontSize: 14 }}>Reached: Level {currentLevel + 1} - {LEVELS[currentLevel].name}</div>
-        <div style={{ display: "flex", gap: 16, marginTop: 28 }}>
-          <button onClick={() => { setScore(0); setLives(3); setCurrentLevel(0); setScreen("select"); }} style={{ padding: "10px 28px", fontSize: 14, background: "transparent", border: "1px solid #F4433660", borderRadius: 4, color: "#F44336", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 2 }}>NEW GAME</button>
-          <button onClick={() => { setLives(3); startGame(currentLevel); }} style={{ padding: "10px 36px", fontSize: 16, background: "linear-gradient(180deg, #F44336, #D32F2F)", border: "2px solid #F44336", borderRadius: 4, color: "#FFF", fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 2 }}>RETRY LEVEL</button>
+        <div style={{ fontSize: 56, marginBottom: 8 }}>💀</div>
+        <h1 style={{ color: "#F44336", fontSize: 42, margin: 0, letterSpacing: 6, animation: "shake 0.5s ease", textShadow: "0 0 20px #F4433660" }}>YOU DIED</h1>
+        <p style={{ color: "#BBB", fontSize: 16, marginTop: 16, letterSpacing: 2 }}>Your quest ends here...</p>
+        <div style={{ color: "#FFD700", fontSize: 18, marginTop: 20 }}>Score: {score}</div>
+        <div style={{ color: "#999", fontSize: 14, marginTop: 4 }}>Level {currentLevel + 1} — {levelName}</div>
+        <div style={{ display: "flex", gap: 20, marginTop: 40 }}>
+          <button onClick={() => { setLives(3); startGame(currentLevel); }} style={{ padding: "14px 36px", fontSize: 18, background: "linear-gradient(180deg, #F44336, #D32F2F)", border: "2px solid #F44336", borderRadius: 4, color: "#FFF", fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 3, boxShadow: "0 0 20px #F4433640" }}>RETRY LEVEL</button>
+          <button onClick={() => { setScore(0); setLives(3); setCurrentLevel(0); setScreen("title"); }} style={{ padding: "14px 36px", fontSize: 18, background: "transparent", border: "2px solid #666", borderRadius: 4, color: "#AAA", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 3 }}>QUIT</button>
         </div>
       </div>
     );

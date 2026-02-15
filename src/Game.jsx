@@ -65,6 +65,11 @@ const WALL_JUMP_VY = -10.5;
 const WALL_GRAB_MARGIN = 6;
 const TELEGRAPH_FRAMES = 25;
 const UNLOCK_DOUBLE_JUMP_AFTER_LEVEL = 1;
+const SAVE_KEY = "bladequest_save";
+const TUTORIAL_KEY = "bladequest_tutorial_done";
+const BEST_TIME_KEY = "bladequest_best_";
+const CHECKPOINT_INTERVAL = 1500;
+const AIR_DASH_COOLDOWN = 50;
 
 // Attack types: 0 = fast, 1 = slow, 2 = special (cooldown)
 const ATTACK_TYPES = [
@@ -255,6 +260,31 @@ function generateLevel(levelId) {
     });
   }
 
+  // Checkpoint shrines (every CHECKPOINT_INTERVAL px)
+  const shrines = [];
+  for (let sx = 600; sx < width - 800; sx += CHECKPOINT_INTERVAL) {
+    shrines.push({
+      x: sx,
+      y: CANVAS_H - TILE - 48,
+      w: 32,
+      h: 48,
+      touched: false,
+    });
+  }
+
+  // Breakable props (pots/crates per realm)
+  const propTypes = ["pot", "crate", "crystal", "mushroom", "urn", "barrel", "vase", "orb", "skull", "pillar"];
+  const props = [];
+  for (let i = 0; i < 6 + levelId; i++) {
+    const px = 400 + ((seed + i * 307) % (width - 900));
+    const py = CANVAS_H - TILE - 28;
+    props.push({
+      x: px, y: py, w: 24, h: 28,
+      type: propTypes[levelId % propTypes.length],
+      broken: false,
+    });
+  }
+
   // Boss area at end
   const bossX = width - 350;
   platforms.push({ x: bossX - 200, y: CANVAS_H - TILE, w: 600, h: TILE, type: "ground" });
@@ -274,7 +304,7 @@ function generateLevel(levelId) {
     telegraphTimer: 0,
   };
 
-  return { platforms, enemies, hazards, coins, hearts, scrolls, boss, width, levelId };
+  return { platforms, enemies, hazards, coins, hearts, scrolls, boss, width, levelId, shrines, props };
 }
 
 // ============================================================
@@ -534,6 +564,14 @@ class MusicEngine {
       setTimeout(() => { s.triggerAttackRelease("G6", "16n"); setTimeout(() => s.dispose(), 250); }, 40);
     } catch (e) {}
   }
+
+  playComboFinisher() {
+    try {
+      const s = new Tone.Synth({ volume: -8, oscillator: { type: "triangle" }, envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.15 } }).toDestination();
+      s.triggerAttackRelease("G5", "16n");
+      setTimeout(() => { s.triggerAttackRelease("C6", "16n"); setTimeout(() => s.dispose(), 200); }, 30);
+    } catch (e) {}
+  }
 }
 
 // ============================================================
@@ -570,6 +608,7 @@ class Particle {
 // SCREEN SHAKE (juice)
 // ============================================================
 function addShake(g, intensity, durationFrames = null, dirX = 0, dirY = 0) {
+  if (g.reduceMotion) intensity *= 0.35;
   const dur = durationFrames ?? Math.ceil(intensity);
   g.shakeEntries = g.shakeEntries || [];
   g.shakeEntries.push({
@@ -706,6 +745,38 @@ function drawCharacter(ctx, x, y, char, facing, frame, attacking, hurt, landSqua
   }
 
   ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function drawShrine(ctx, shrine, camX, lvl) {
+  if (shrine.touched) return;
+  const x = shrine.x - camX;
+  if (x > CANVAS_W + 50 || x < -50) return;
+  ctx.save();
+  ctx.fillStyle = lvl.accent + "60";
+  ctx.strokeStyle = lvl.accent;
+  ctx.lineWidth = 2;
+  ctx.fillRect(x, shrine.y, shrine.w, shrine.h);
+  ctx.strokeRect(x, shrine.y, shrine.w, shrine.h);
+  ctx.fillStyle = "#c4a35a";
+  ctx.font = "10px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("◆", x + shrine.w / 2, shrine.y + shrine.h / 2 + 4);
+  ctx.restore();
+}
+
+function drawProp(ctx, prop, camX, lvl) {
+  if (prop.broken) return;
+  const x = prop.x - camX;
+  if (x > CANVAS_W + 30 || x < -30) return;
+  ctx.save();
+  ctx.fillStyle = lvl.platform;
+  ctx.strokeStyle = lvl.accent + "99";
+  ctx.lineWidth = 1;
+  ctx.fillRect(x, prop.y, prop.w, prop.h);
+  ctx.strokeRect(x, prop.y, prop.w, prop.h);
+  ctx.fillStyle = lvl.accent + "cc";
+  ctx.fillRect(x + 2, prop.y + 2, prop.w - 4, 6);
   ctx.restore();
 }
 
@@ -1205,6 +1276,17 @@ export default function Game() {
   const [musicVolume, setMusicVolume] = useState(1);
   const [reduceShake, setReduceShake] = useState(1);
   const [deathFlavorIndex, setDeathFlavorIndex] = useState(0);
+  const [difficulty, setDifficulty] = useState(() => {
+    try { const s = localStorage.getItem(SAVE_KEY); if (s) { const d = JSON.parse(s); return d.difficulty ?? 1; } } catch (_) {}
+    return 1;
+  });
+  const [reduceMotion, setReduceMotion] = useState(() => {
+    try { const s = localStorage.getItem(SAVE_KEY); if (s) { const d = JSON.parse(s); return d.reduceMotion ?? false; } } catch (_) {}
+    return false;
+  });
+  const [showIntro, setShowIntro] = useState(() => {
+    try { return !localStorage.getItem("bladequest_intro_seen"); } catch (_) { return true; }
+  });
 
   const gameRef = useRef({
     keys: {},
@@ -1256,20 +1338,27 @@ export default function Game() {
     lastEnemyKillFrames: 0,
     idleFrames: 0,
     lastSurface: "ground",
+    checkpointX: null,
+    checkpointY: null,
+    levelStartTime: 0,
   });
 
-  const initPlayer = useCallback((charId, levelId) => {
+  const initPlayer = useCallback((charId, levelId, difficulty = 1) => {
     const c = CHARACTERS[charId];
     const hasDoubleJumpUnlock = levelId > UNLOCK_DOUBLE_JUMP_AFTER_LEVEL;
     const maxJumps = (hasDoubleJumpUnlock || charId === 4) ? 2 : 1;
+    const hpMult = difficulty === 0 ? 1.3 : difficulty === 2 ? 0.8 : 1;
+    const damageTakenMult = difficulty === 0 ? 0.7 : difficulty === 2 ? 1.3 : 1;
+    const baseHealth = Math.round(c.health * hpMult);
     return {
       x: 80, y: CANVAS_H - TILE - 40,
       w: 32, h: 36,
       vx: 0, vy: 0,
       speed: c.speed,
       jumpPower: c.jump,
-      health: c.health,
-      maxHealth: c.health,
+      health: baseHealth,
+      maxHealth: baseHealth,
+      damageTakenMult,
       attack: c.attack,
       charId,
       grounded: false,
@@ -1300,6 +1389,7 @@ export default function Game() {
       wallSlideRight: false,
       dashFrames: 0,
       dashCooldown: 0,
+      airDashUsed: false,
     };
   }, []);
 
@@ -1324,12 +1414,37 @@ export default function Game() {
   }, []);
 
   useEffect(() => {
+    try {
+      const s = localStorage.getItem(SAVE_KEY);
+      if (s) {
+        const d = JSON.parse(s);
+        if (d.currentLevel != null) setCurrentLevel(d.currentLevel);
+        if (d.score != null) setScore(d.score);
+        if (d.lives != null) setLives(d.lives);
+        if (Array.isArray(d.clearedLevels)) setClearedLevels(new Set(d.clearedLevels));
+        if (d.selectedChar != null) setSelectedChar(d.selectedChar);
+        if (d.difficulty != null) setDifficulty(d.difficulty);
+        if (d.musicVolume != null) setMusicVolume(d.musicVolume);
+        if (d.sfxVolume != null) setSfxVolume(d.sfxVolume);
+        if (d.reduceMotion != null) setReduceMotion(!!d.reduceMotion);
+      }
+    } catch (_) {}
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify({
+        currentLevel, score, lives, clearedLevels: Array.from(clearedLevels), selectedChar, difficulty, musicVolume, sfxVolume, reduceMotion,
+      }));
+    } catch (_) {}
+  }, [currentLevel, score, lives, clearedLevels, selectedChar, difficulty, musicVolume, sfxVolume, reduceMotion]);
+
+  useEffect(() => {
     return () => { gameRef.current.music.stop(); };
   }, []);
 
   const startGame = useCallback((levelId) => {
     const g = gameRef.current;
-    g.player = initPlayer(selectedChar, levelId);
+    g.player = initPlayer(selectedChar, levelId, difficulty);
     g.level = generateLevel(levelId);
     g.camX = 0;
     g.camY = 0;
@@ -1368,6 +1483,12 @@ export default function Game() {
     g.perfectDodgeThisDodge = false;
     g.lastEnemyKillFrames = 0;
     g.idleFrames = 0;
+    g.checkpointX = null;
+    g.checkpointY = null;
+    g.checkpointTextFrames = 0;
+    g.levelStartTime = Date.now();
+    g.tutorialDone = false;
+    try { g.tutorialDone = !!localStorage.getItem(TUTORIAL_KEY); } catch (_) {}
     g.levelIntroLineTimer = 90;
     const introOpts = LEVEL_INTRO_LINES[levelId];
     g.levelIntroLine = Array.isArray(introOpts) ? introOpts[Math.floor(Math.random() * introOpts.length)] : (introOpts ?? "The path awaits.");
@@ -1375,7 +1496,7 @@ export default function Game() {
     g.loreLineTimer = 0;
     setScreen("game");
     if (musicOn) g.music.start(levelId);
-  }, [selectedChar, initPlayer, musicOn]);
+  }, [selectedChar, initPlayer, musicOn, difficulty]);
 
   useEffect(() => {
     if (screen !== "game") return;
@@ -1399,6 +1520,7 @@ export default function Game() {
       const boss = lvl?.boss;
 
       if (!paused) {
+      g.reduceMotion = reduceMotion;
       const inHitStop = g.hitStopFrames > 0;
       if (inHitStop) g.hitStopFrames--;
 
@@ -1460,9 +1582,17 @@ export default function Game() {
       }
       if (p.dodgeRollCooldown > 0) p.dodgeRollCooldown--;
       if ((g.keys["KeyC"] || g.keys["KeyV"]) && p.dashCooldown <= 0 && !isRolling && p.dashFrames <= 0) {
-        p.dashFrames = DASH_FRAMES;
-        p.dashCooldown = DASH_COOLDOWN;
-        if (musicOn) g.music.playFootstep("ground", sfxVolume);
+        if (!p.grounded && !p.airDashUsed) {
+          p.dashFrames = DASH_FRAMES;
+          p.dashCooldown = AIR_DASH_COOLDOWN;
+          p.airDashUsed = true;
+          p.vx = p.facing * DASH_SPEED;
+          p.vy = 0;
+        } else if (p.grounded) {
+          p.dashFrames = DASH_FRAMES;
+          p.dashCooldown = DASH_COOLDOWN;
+        }
+        if (p.dashFrames > 0 && musicOn) g.music.playFootstep("ground", sfxVolume);
       }
       if (p.dashFrames > 0) {
         p.dashFrames--;
@@ -1508,6 +1638,7 @@ export default function Game() {
       else g.timeScale = 1;
       const dt = g.timeScale;
       if (p.dodgeRollFrames <= 0) g.perfectDodgeThisDodge = false;
+      if (p.grounded) p.airDashUsed = false;
       if (p.dashFrames > 0 || p.dodgeRollFrames > 0) {
         p.vx = 0;
         p.vy = 0;
@@ -1672,10 +1803,25 @@ export default function Game() {
         }
       });
 
+      // Checkpoints (shrines)
+      if (lvl.shrines) {
+        lvl.shrines.forEach((shrine) => {
+          if (shrine.touched) return;
+          if (p.x + p.w > shrine.x && p.x < shrine.x + shrine.w && p.y + p.h > shrine.y && p.y < shrine.y + shrine.h) {
+            shrine.touched = true;
+            g.checkpointX = shrine.x + shrine.w / 2 - p.w / 2;
+            g.checkpointY = shrine.y - p.h;
+            g.checkpointTextFrames = 90;
+            if (musicOn) g.music.playConfirm();
+          }
+        });
+      }
+      if (g.checkpointTextFrames > 0) g.checkpointTextFrames--;
+
       // HAZARDS
       lvl.hazards.forEach((haz) => {
         if (p.x + p.w > haz.x && p.x < haz.x + haz.w && p.y + p.h > haz.y && p.y < haz.y + haz.h && p.invincible <= 0 && !p.shieldActive) {
-          p.health -= haz.damage; p.hurt = 20; p.invincible = 40; p.vy = -8;
+          p.health -= Math.max(1, Math.ceil(haz.damage * (p.damageTakenMult ?? 1))); p.hurt = 20; p.invincible = 40; p.vy = -8;
           g.damageFlashFrames = 3;
           addShake(g, 10);
         }
@@ -1684,6 +1830,19 @@ export default function Game() {
       // SWORD HITBOX
       const swordW = p.attacking > 0 ? ATTACK_TYPES[p.attackTypeUsed ?? 0].swordW : 30;
       const swordBox = p.attacking > 0 ? { x: p.facing > 0 ? p.x + p.w : p.x - swordW, y: p.y - 5, w: swordW, h: p.h + 10 } : null;
+
+      // Breakable props (sword breaks them)
+      if (swordBox && lvl.props) {
+        lvl.props.forEach((prop) => {
+          if (prop.broken) return;
+          if (swordBox.x + swordBox.w > prop.x && swordBox.x < prop.x + prop.w && swordBox.y + swordBox.h > prop.y && swordBox.y < prop.y + prop.h) {
+            prop.broken = true;
+            for (let i = 0; i < 12; i++) g.particles.push(new Particle(prop.x + prop.w / 2, prop.y + prop.h / 2, levelData.accent, (Math.random() - 0.5) * 8, (Math.random() - 0.5) * 8 - 4, 25, 4));
+            if (Math.random() < 0.5) setScore((s) => s + 10);
+            if (musicOn) g.music.playCoin();
+          }
+        });
+      }
 
       // ENEMIES
       lvl.enemies.forEach((enemy) => {
@@ -1731,7 +1890,7 @@ export default function Game() {
           g.timeScale = 0.35;
           g.timeScaleTimer = 28;
         } else if (overlap && p.invincible <= 0 && !p.shieldActive) {
-          p.health -= 10 + lvl.levelId * 2; p.hurt = 20; p.invincible = 60; p.vy = -6;
+          p.health -= Math.max(1, Math.ceil((10 + lvl.levelId * 2) * (p.damageTakenMult ?? 1))); p.hurt = 20; p.invincible = 60; p.vy = -6;
           p.vx = (p.x < enemy.x ? -1 : 1) * 5;
           g.damageFlashFrames = 3;
           addShake(g, 8);
@@ -1739,7 +1898,8 @@ export default function Game() {
 
         if (swordBox && enemy.alive && swordBox.x + swordBox.w > enemy.x && swordBox.x < enemy.x + enemy.w && swordBox.y + swordBox.h > enemy.y && swordBox.y < enemy.y + enemy.h && p.attacking === p.attackHitFrame) {
           const isCrit = Math.random() < CRITICAL_HIT_CHANCE;
-          const baseDmg = p.chargedAttack ? Math.ceil(p.attack * CHARGE_DAMAGE_MULT) : Math.ceil(p.attack * (p.attackDmgMult ?? 1));
+          let baseDmg = p.chargedAttack ? Math.ceil(p.attack * CHARGE_DAMAGE_MULT) : Math.ceil(p.attack * (p.attackDmgMult ?? 1));
+          if (g.comboCount >= 2) { baseDmg = Math.ceil(baseDmg * 1.5); if (musicOn) g.music.playComboFinisher(); }
           const dmg = isCrit ? baseDmg * 2 : baseDmg;
           enemy.health -= dmg; enemy.hit = 10; enemy.vx = p.facing * 5;
           g.damageNumbers.push({ x: enemy.x + 16, y: enemy.y - 10, value: dmg, life: 45, vy: -1.5, critical: isCrit });
@@ -1768,7 +1928,8 @@ export default function Game() {
         if (g.bossIntroTimer === 0) g.bossIntroTimer = 150;
         if (g.bossDisplayedHp <= 0) { g.bossDisplayedHp = boss.health; g.bossGhostHp = boss.maxHealth; }
         boss.attackTimer++;
-        const attackThreshold = Math.max(30, 90 - lvl.levelId * 5);
+        let attackThreshold = Math.max(30, 90 - lvl.levelId * 5);
+        if (boss.phaseTriggered) attackThreshold = Math.floor(attackThreshold * 0.65);
         if (boss.attackTimer >= attackThreshold - TELEGRAPH_FRAMES && boss.attackTimer < attackThreshold) boss.telegraphTimer = attackThreshold - boss.attackTimer;
         else if (boss.attackTimer >= attackThreshold) boss.telegraphTimer = 0;
         const bossSpeed = 1.5 + lvl.levelId * 0.2;
@@ -1784,15 +1945,17 @@ export default function Game() {
             boss.vx = boss.facing * 8;
           } else if (boss.pattern === 1) {
             boss.projectiles.push({ x: boss.x + boss.w / 2, y: boss.y + boss.h / 3, vx: boss.facing * 5, vy: -1, life: 120 });
+            if (boss.phaseTriggered) boss.projectiles.push({ x: boss.x + boss.w / 2, y: boss.y + boss.h / 2, vx: -boss.facing * 4, vy: 0, life: 90 });
           } else {
             for (let i = -2; i <= 2; i++) boss.projectiles.push({ x: boss.x + boss.w / 2, y: boss.y + boss.h / 3, vx: boss.facing * 4 + i * 0.5, vy: -2 + Math.abs(i) * 0.5, life: 90 });
+            if (boss.phaseTriggered) for (let i = -1; i <= 1; i++) boss.projectiles.push({ x: boss.x + boss.w / 2, y: boss.y + boss.h / 2, vx: i * 3, vy: 2, life: 80 });
           }
         }
 
         boss.projectiles = boss.projectiles.filter((proj) => {
           proj.x += proj.vx * dt; proj.y += proj.vy * dt; proj.vy += 0.05 * dt; proj.life--;
           if (Math.abs(proj.x - (p.x + 16)) < 20 && Math.abs(proj.y - (p.y + 18)) < 20 && p.invincible <= 0 && !p.shieldActive) {
-            p.health -= 15 + lvl.levelId * 3; p.hurt = 20; p.invincible = 60; p.vy = -6;
+            p.health -= Math.max(1, Math.ceil((15 + lvl.levelId * 3) * (p.damageTakenMult ?? 1))); p.hurt = 20; p.invincible = 60; p.vy = -6;
             g.damageFlashFrames = 3;
             addShake(g, 8);
             return false;
@@ -1801,7 +1964,7 @@ export default function Game() {
         });
 
         if (p.x + p.w > boss.x && p.x < boss.x + boss.w && p.y + p.h > boss.y && p.y < boss.y + boss.h && p.invincible <= 0 && !p.shieldActive) {
-          p.health -= 20 + lvl.levelId * 3; p.hurt = 20; p.invincible = 60; p.vy = -10;
+          p.health -= Math.max(1, Math.ceil((20 + lvl.levelId * 3) * (p.damageTakenMult ?? 1))); p.hurt = 20; p.invincible = 60; p.vy = -10;
           p.vx = (p.x < boss.x ? -1 : 1) * 8;
           g.damageFlashFrames = 4;
           addShake(g, 12);
@@ -1831,6 +1994,12 @@ export default function Game() {
             setClearedLevels((prev) => new Set([...prev, lvl.levelId]));
             if (musicOn) g.music.playBossDeath();
             setScore((s) => s + 500 + lvl.levelId * 100);
+            try {
+              const elapsed = (Date.now() - g.levelStartTime) / 1000;
+              const key = BEST_TIME_KEY + lvl.levelId;
+              const best = parseFloat(localStorage.getItem(key));
+              if (!best || elapsed < best) localStorage.setItem(key, String(elapsed.toFixed(2)));
+            } catch (_) {}
             addShake(g, 20);
             for (let i = 0; i < 60; i++) g.particles.push(new Particle(boss.x + boss.w / 2, boss.y + boss.h / 2, ["#FF0", "#F80", "#F00", "#FFF", levelData.accent][i % 5], (Math.random() - 0.5) * 15, (Math.random() - 0.5) * 15, 60, 6));
             for (let i = 0; i < 40; i++) g.particles.push(new Particle(boss.x + boss.w / 2, boss.y + boss.h / 2, ["#c4a35a", "#e0d8c8", levelData.accent, "#a87a7a"][i % 4], (Math.random() - 0.5) * 12, (Math.random() - 0.5) * 12 - 4, 50, 4));
@@ -1852,17 +2021,31 @@ export default function Game() {
         }
       }
 
-      // DEATH
+      // DEATH (or respawn at checkpoint)
       if (p.health <= 0 && !g.transitioning) {
         g.transitioning = true;
         addShake(g, 15 + DEATH_SHAKE_EXTRA);
         g.damageFlashFrames = Math.max(g.damageFlashFrames, 8);
         for (let i = 0; i < 30 + DEATH_PARTICLES_EXTRA; i++) g.particles.push(new Particle(p.x + 16, p.y + 18, "#F00", (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10, 40, 5));
+        const hadCheckpoint = g.checkpointX != null;
         setTimeout(() => {
           if (!running) return;
-          g.music.stop();
-          setDeathFlavorIndex(Math.floor(Math.random() * DEATH_SCREEN_LINES.length));
-          setScreen("death");
+          if (hadCheckpoint) {
+            p.x = g.checkpointX;
+            p.y = g.checkpointY;
+            p.health = p.maxHealth;
+            g.displayedHp = p.maxHealth;
+            g.ghostHp = p.maxHealth;
+            p.hurt = 0;
+            p.invincible = 120;
+            p.vx = 0;
+            p.vy = 0;
+            g.transitioning = false;
+          } else {
+            g.music.stop();
+            setDeathFlavorIndex(Math.floor(Math.random() * DEATH_SCREEN_LINES.length));
+            setScreen("death");
+          }
         }, 1000);
       }
 
@@ -1939,6 +2122,8 @@ export default function Game() {
       lvl.coins.forEach((coin) => drawCoin(ctx, coin, g.camX, g.frame, levelData));
       lvl.hearts.forEach((heart) => drawHeart(ctx, heart, g.camX, g.frame, levelData));
       if (lvl.scrolls) lvl.scrolls.forEach((scroll) => drawScroll(ctx, scroll, g.camX, g.frame, levelData));
+      if (lvl.shrines) lvl.shrines.forEach((shrine) => drawShrine(ctx, shrine, g.camX, levelData));
+      if (lvl.props) lvl.props.forEach((prop) => drawProp(ctx, prop, g.camX, levelData));
       lvl.enemies.forEach((enemy) => drawEnemy(ctx, enemy, g.camX, g.frame, lvl.levelId));
       if (g.bossActive && boss) drawBoss(ctx, boss, g.camX, g.frame, lvl.levelId);
       if (g.slashTrail && g.slashTrail.length > 0) {
@@ -2174,6 +2359,21 @@ export default function Game() {
       ctx.fillStyle = "#c4a35a"; ctx.font = "bold 16px monospace";
       ctx.fillText(`★ ${score}`, CANVAS_W - 120, 28);
       ctx.fillStyle = "#FF6B6B"; ctx.fillText(`♥ x${lives}`, CANVAS_W - 120, 52);
+      const elapsed = g.levelStartTime ? (Date.now() - g.levelStartTime) / 1000 : 0;
+      ctx.fillStyle = "#888";
+      ctx.font = "12px monospace";
+      ctx.fillText(`${elapsed.toFixed(1)}s`, CANVAS_W - 120, 76);
+      if (g.checkpointTextFrames > 0) {
+        const alpha = Math.min(1, g.checkpointTextFrames / 20, (90 - g.checkpointTextFrames) / 25);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = "#5a7a5a";
+        ctx.font = "bold 14px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("Checkpoint!", CANVAS_W / 2, 80);
+        ctx.textAlign = "left";
+        ctx.restore();
+      }
 
       // Attack type selector + descriptions
       ctx.fillStyle = "#888";
@@ -2328,10 +2528,14 @@ export default function Game() {
         ctx.fillText(b.name, CANVAS_W / 2, CANVAS_H - 22); ctx.textAlign = "left";
       }
 
-      if (g.levelTimer < 300) {
-        ctx.globalAlpha = Math.max(0, 1 - g.levelTimer / 300);
+      if (!g.tutorialDone && g.levelTimer >= 180) {
+        g.tutorialDone = true;
+        try { localStorage.setItem(TUTORIAL_KEY, "1"); } catch (_) {}
+      }
+      if (g.levelTimer < (g.tutorialDone ? 300 : 180)) {
+        ctx.globalAlpha = Math.max(0, 1 - g.levelTimer / (g.tutorialDone ? 300 : 180));
         ctx.fillStyle = "#FFF"; ctx.font = "10px monospace"; ctx.textAlign = "center";
-        ctx.fillText("← → Move   ↑ Jump   1 2 3 = attack type   Z = strike (hold to charge)   Shift = dodge" + (selectedChar === 5 ? "   X = shield" : ""), CANVAS_W / 2, CANVAS_H - 60);
+        ctx.fillText(g.tutorialDone ? "← → Move   ↑ Jump   1 2 3 = attack type   Z = strike (hold to charge)   Shift = dodge" + (selectedChar === 5 ? "   X = shield" : "") : "Hold Z to charge • Shift = dodge", CANVAS_W / 2, CANVAS_H - 60);
         ctx.textAlign = "left"; ctx.globalAlpha = 1;
       }
 
@@ -2353,7 +2557,7 @@ export default function Game() {
 
     requestAnimationFrame(gameLoop);
     return () => { running = false; };
-  }, [screen, selectedChar, score, lives, musicOn, initPlayer, paused, setPaused, reduceShake, startGame, sfxVolume]);
+  }, [screen, selectedChar, score, lives, musicOn, initPlayer, paused, setPaused, reduceShake, reduceMotion, startGame, sfxVolume]);
 
   useEffect(() => {
     const g = gameRef.current;
@@ -2365,6 +2569,48 @@ export default function Game() {
   // RENDER UI
   // ============================================================
   const titleGradient = "linear-gradient(135deg, #1c1812 0%, #2a241a 40%, #352e22 70%, #242018 100%)";
+
+  if (showIntro) {
+    return (
+      <div onClick={() => { setShowIntro(false); try { localStorage.setItem("bladequest_intro_seen", "1"); } catch (_) {} setScreen("title"); }} style={{ width: CANVAS_W, height: CANVAS_H, margin: "0 auto", background: "linear-gradient(180deg, #0a0806 0%, #1a1510 50%, #0a0806 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Courier New', monospace", cursor: "pointer", borderRadius: 8, border: "2px solid #8a7a5a40", padding: 40 }}>
+        <div style={{ color: "#c4a35a", fontSize: 14, lineHeight: 1.8, textAlign: "center", maxWidth: 520 }}>
+          The Blight consumed the realms one by one. Only the chosen blade can restore the balance.
+        </div>
+        <div style={{ color: "#8a7a6a", fontSize: 12, marginTop: 24, letterSpacing: 2 }}>Press any key or click to continue</div>
+      </div>
+    );
+  }
+
+  if (screen === "options") {
+    return (
+      <div style={{ width: CANVAS_W, height: CANVAS_H, margin: "0 auto", background: titleGradient, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Courier New', monospace", borderRadius: 8, border: "2px solid #8a7a5a60", padding: 24 }}>
+        <h2 style={{ color: "#c4a35a", fontSize: 28, marginBottom: 24, letterSpacing: 4 }}>OPTIONS</h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, width: 280 }}>
+          <div>
+            <label style={{ color: "#AAA", fontSize: 12 }}>Difficulty</label>
+            <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+              {["Easy", "Normal", "Hard"].map((label, i) => (
+                <button key={i} onClick={() => { setDifficulty(i); gameRef.current.music.playConfirm(); }} style={{ flex: 1, padding: "8px 12px", fontSize: 12, background: difficulty === i ? "#c4a35a40" : "#ffffff0c", border: `2px solid ${difficulty === i ? "#c4a35a" : "#555"}`, borderRadius: 4, color: difficulty === i ? "#FFF" : "#888", cursor: "pointer", fontFamily: "'Courier New', monospace" }}>{label}</button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label style={{ color: "#AAA", fontSize: 12 }}>Music: {Math.round(musicVolume * 100)}%</label>
+            <input type="range" min="0" max="100" value={musicVolume * 100} onChange={(e) => setMusicVolume(Number(e.target.value) / 100)} style={{ width: "100%", marginTop: 4 }} />
+          </div>
+          <div>
+            <label style={{ color: "#AAA", fontSize: 12 }}>SFX: {Math.round(sfxVolume * 100)}%</label>
+            <input type="range" min="0" max="100" value={sfxVolume * 100} onChange={(e) => setSfxVolume(Number(e.target.value) / 100)} style={{ width: "100%", marginTop: 4 }} />
+          </div>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, color: "#AAA", fontSize: 12, cursor: "pointer" }}>
+            <input type="checkbox" checked={reduceMotion} onChange={() => setReduceMotion((m) => !m)} />
+            Reduce motion (less shake/particles)
+          </label>
+          <button onClick={() => { gameRef.current.music.playBack(); setScreen("title"); }} style={{ marginTop: 12, padding: "10px 24px", fontSize: 14, background: "transparent", border: "1px solid #a8906070", borderRadius: 4, color: "#c4a35a", cursor: "pointer", fontFamily: "'Courier New', monospace" }}>← BACK</button>
+        </div>
+      </div>
+    );
+  }
 
   if (screen === "title") {
     return (
@@ -2386,6 +2632,7 @@ export default function Game() {
         <div style={{ fontSize: 14, color: "#c4a35a", marginTop: 6, letterSpacing: 4, opacity: 0.9, animation: "slideUp 1.1s ease" }}>Ten realms. One blade.</div>
         <div style={{ fontSize: 48, marginTop: 24, animation: "swordSwing 2s ease-in-out infinite", filter: "drop-shadow(0 0 8px #c4a35a)" }}>⚔️</div>
         <button onClick={() => { gameRef.current.music.playConfirm(); setScreen("select"); }} style={{ marginTop: 32, padding: "14px 48px", fontSize: 20, background: "linear-gradient(180deg, #b89550, #9a6a38)", border: "2px solid #c4a35a", borderRadius: 4, color: "#1a0a00", fontWeight: "bold", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 3, animation: "slideUp 1.2s ease", transition: "all 0.2s", boxShadow: "0 0 20px #a8906060, 0 4px 12px rgba(0,0,0,0.4)" }} onMouseEnter={(e) => { e.target.style.transform = "scale(1.05)"; e.target.style.boxShadow = "0 0 30px #a8906080"; }} onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; e.target.style.boxShadow = "0 0 20px #a8906060, 0 4px 12px rgba(0,0,0,0.4)"; }}>BEGIN QUEST</button>
+        <button onClick={() => { gameRef.current.music.playConfirm(); setScreen("options"); }} style={{ marginTop: 12, padding: "10px 32px", fontSize: 14, background: "transparent", border: "1px solid #a8906070", borderRadius: 4, color: "#c4a35a", cursor: "pointer", fontFamily: "'Courier New', monospace", letterSpacing: 2 }}>OPTIONS</button>
         <div style={{ position: "absolute", bottom: 16, color: "#666", fontSize: 12, letterSpacing: 2 }}>10 REALMS • 6 HEROES • ENDLESS GLORY</div>
         <button onClick={() => setMusicOn(!musicOn)} style={{ position: "absolute", top: 12, right: 12, background: "none", border: "1px solid #a8906060", borderRadius: 4, color: musicOn ? "#c4a35a" : "#666", fontSize: 20, cursor: "pointer", padding: "4px 8px" }}>{musicOn ? "🔊" : "🔇"}</button>
       </div>
